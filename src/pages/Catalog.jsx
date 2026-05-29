@@ -116,18 +116,25 @@ export default function Catalog() {
   const filtered = useMemo(() => {
     let list = [...products];
 
+    // Helper: get all occasions for a product (supports both array and string)
+    const getOccasions = (p) => {
+      if (Array.isArray(p.occasions) && p.occasions.length) return p.occasions;
+      if (p.occasion) return [p.occasion];
+      return [];
+    };
+
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       list = list.filter(p =>
         p.name.toLowerCase().includes(q) ||
         p.fabric.toLowerCase().includes(q) ||
-        p.occasion.toLowerCase().includes(q) ||
-        p.region.toLowerCase().includes(q)
+        getOccasions(p).some(o => o.toLowerCase().includes(q)) ||
+        (p.region || '').toLowerCase().includes(q)
       );
     }
     if (filterType === 'new') list = list.filter(p => p.isNew);
     if (filterType === 'trending') list = list.filter(p => p.isTrending);
-    if (selectedOccasion !== 'All') list = list.filter(p => p.occasion === selectedOccasion);
+    if (selectedOccasion !== 'All') list = list.filter(p => getOccasions(p).includes(selectedOccasion));
     if (selectedFabric !== 'All') list = list.filter(p => p.fabric === selectedFabric);
     if (showInStock) list = list.filter(p => p.inStock);
 

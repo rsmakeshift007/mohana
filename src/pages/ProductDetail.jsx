@@ -204,7 +204,7 @@ export default function ProductDetail() {
               {[
                 { icon: '🧵', label: product.fabric },
                 { icon: '📍', label: product.region },
-                { icon: '🎭', label: product.occasion },
+                { icon: '🎭', label: (Array.isArray(product.occasions) && product.occasions.length ? product.occasions : [product.occasion]).join(', ') },
                 { icon: '📏', label: '5.5 Metres' },
               ].map(chip => (
                 <span key={chip.label} style={{
@@ -303,7 +303,7 @@ export default function ProductDetail() {
               {[
                 ['Fabric', product.fabric],
                 ['Origin', product.region],
-                ['Occasion', product.occasion],
+                ['Occasion', (Array.isArray(product.occasions) && product.occasions.length ? product.occasions : [product.occasion]).join(', ')],
                 ['Length', '5.5 Metres'],
                 ['Blouse Piece', 'Included (0.8m)'],
                 ['Care', 'Dry Clean Only'],

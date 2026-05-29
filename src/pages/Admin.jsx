@@ -194,10 +194,16 @@ function ReelUploadZone({ reels, onAdd, onRemove, onLabelChange }) {
 
 // ─── Add / Edit Product Form ─────────────────
 function ProductForm({ onSave, onCancel, editProduct }) {
-  const [form, setForm] = useState(editProduct || {
-    name: '', fabric: 'Pure Silk', occasion: 'Wedding', price: '', originalPrice: '',
-    region: '', color: '#8B1A1A', description: '', inStock: true,
-    vendorId: '', vendorName: '',
+  const [form, setForm] = useState(() => {
+    const base = editProduct || {
+      name: '', fabric: 'Pure Silk', price: '', originalPrice: '',
+      region: '', color: '#8B1A1A', description: '', inStock: true,
+      vendorId: '', vendorName: '',
+    };
+    // Normalize occasions → always an array
+    let occ = base.occasions || (base.occasion ? [base.occasion] : ['Wedding']);
+    if (!Array.isArray(occ)) occ = [occ];
+    return { ...base, occasions: occ };
   });
   const [vendors, setVendors] = useState(() => vendorDB.getAll().filter(v => v.active !== false));
   // Refresh vendor list when localStorage changes (e.g., admin just added a new vendor)
@@ -266,6 +272,7 @@ function ProductForm({ onSave, onCancel, editProduct }) {
 
       const mainImageUrl = uploadedImages[0]?.src || form.imageUrl || '';
 
+      const occArr = Array.isArray(form.occasions) && form.occasions.length ? form.occasions : ['Wedding'];
       onSave({
         ...form,
         id:            editProduct?.id || String(Date.now()),
@@ -275,6 +282,8 @@ function ProductForm({ onSave, onCancel, editProduct }) {
         price:         Number(form.price),
         originalPrice: form.originalPrice ? Number(form.originalPrice) : null,
         discount:      form.originalPrice ? Math.round((1 - form.price / form.originalPrice) * 100) : 0,
+        occasions:     occArr,
+        occasion:      occArr[0],   // backward compat — primary occasion
         rating:        editProduct?.rating  ?? 4.5,
         reviews:       editProduct?.reviews ?? 0,
         isNew:         true,
@@ -310,22 +319,53 @@ function ProductForm({ onSave, onCancel, editProduct }) {
               onBlur={e => e.target.style.borderColor = 'var(--border)'} />
           </div>
 
-          {/* Fabric + Occasion */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div>
-              <label style={labelSt}>FABRIC *</label>
-              <select value={form.fabric} onChange={e => setForm(f => ({ ...f, fabric: e.target.value }))}
-                style={{ ...inputSt, cursor: 'pointer' }}>
-                {fabrics.map(f => <option key={f}>{f}</option>)}
-              </select>
+          {/* Fabric */}
+          <div>
+            <label style={labelSt}>FABRIC *</label>
+            <select value={form.fabric} onChange={e => setForm(f => ({ ...f, fabric: e.target.value }))}
+              style={{ ...inputSt, cursor: 'pointer' }}>
+              {fabrics.map(f => <option key={f}>{f}</option>)}
+            </select>
+          </div>
+
+          {/* Occasion — multi-select chips */}
+          <div>
+            <label style={labelSt}>OCCASION * <span style={{ fontWeight: 400, color: 'var(--accent)', textTransform: 'none', letterSpacing: 0 }}>(multiple select kar sakte ho)</span></label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: '10px 12px', border: '1.5px solid var(--border)', borderRadius: 8, background: 'var(--bg)', minHeight: 44 }}>
+              {occasions.map(o => {
+                const selected = (form.occasions || []).includes(o);
+                return (
+                  <button
+                    key={o}
+                    type="button"
+                    onClick={() => {
+                      setForm(f => {
+                        const cur = f.occasions || [];
+                        const next = cur.includes(o)
+                          ? cur.filter(x => x !== o)
+                          : [...cur, o];
+                        return { ...f, occasions: next.length ? next : [o] };
+                      });
+                    }}
+                    style={{
+                      padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700,
+                      cursor: 'pointer', border: 'none', fontFamily: 'var(--font-sans)',
+                      background: selected ? 'var(--primary)' : 'var(--surface-alt)',
+                      color: selected ? 'var(--accent-light)' : 'var(--text-sec)',
+                      boxShadow: selected ? '0 2px 6px rgba(62,74,44,0.25)' : 'none',
+                      transition: 'all 0.18s',
+                    }}
+                  >
+                    {selected ? '✓ ' : ''}{o}
+                  </button>
+                );
+              })}
             </div>
-            <div>
-              <label style={labelSt}>OCCASION *</label>
-              <select value={form.occasion} onChange={e => setForm(f => ({ ...f, occasion: e.target.value }))}
-                style={{ ...inputSt, cursor: 'pointer' }}>
-                {occasions.map(o => <option key={o}>{o}</option>)}
-              </select>
-            </div>
+            {(form.occasions || []).length > 0 && (
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                Selected: {(form.occasions).join(', ')}
+              </div>
+            )}
           </div>
 
           {/* Price + Original Price */}
