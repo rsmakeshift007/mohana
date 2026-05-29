@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authAPI, bannersAPI, reelsAPI, storageAPI, productsAPI as supabaseProductsAPI } from '../services/supabase';
+import { authAPI, bannersAPI, reelsAPI, storageAPI, productsAPI as supabaseProductsAPI, categoriesAPI as supabaseCategoriesAPI } from '../services/supabase';
 import { productsDB, ordersDB, customersDB, settingsDB, getDBStats, bannerDB, legalDB, vendorDB, manualOrdersDB, categoriesDB, faqsDB } from '../services/db';
 import { productsAPI, ordersAPI, customersAPI, settingsAPI, getAPIStats, isBackendAvailable } from '../services/api';
 
@@ -229,16 +229,14 @@ function ProductForm({ onSave, onCancel, editProduct }) {
   const [fabrics,   setFabrics]   = useState(() => categoriesDB.getFabrics());
   const [occasions, setOccasions] = useState(() => categoriesDB.getOccasions());
 
-  // Refresh when admin updates categories in Settings
+  // Load from Supabase on mount (overrides localStorage)
   useEffect(() => {
-    function onStorage(e) {
-      if (e.key === 'mohanah_db_categories') {
-        setFabrics(categoriesDB.getFabrics());
-        setOccasions(categoriesDB.getOccasions());
-      }
-    }
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    supabaseCategoriesAPI.getFabrics()
+      .then(data => { if (data && data.length) setFabrics(data); })
+      .catch(() => {});
+    supabaseCategoriesAPI.getOccasions()
+      .then(data => { if (data && data.length) setOccasions(data); })
+      .catch(() => {});
   }, []);
 
   const inputSt = { width: '100%', padding: '10px 13px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, fontFamily: 'var(--font-sans)', background: 'var(--bg)', outline: 'none', color: 'var(--text)' };
@@ -2630,39 +2628,67 @@ function AdminPasswordChanger() {
   );
 }
 
-// ─── Categories Manager (Fabrics & Occasions) ─
+// ─── Categories Manager (Fabrics & Occasions) — Supabase ─
 function CategoriesManager() {
-  const [cats,         setCats]         = useState(() => categoriesDB.get());
+  const [fabrics,      setFabrics]      = useState([]);
+  const [occasions,    setOccasions]    = useState([]);
+  const [allCats,      setAllCats]      = useState([]); // full objects with id
   const [newFabric,    setNewFabric]    = useState('');
   const [newOccasion,  setNewOccasion]  = useState('');
   const [saved,        setSaved]        = useState('');
+  const [loading,      setLoading]      = useState(true);
 
-  function addFabric() {
+  async function loadCats() {
+    try {
+      const data = await supabaseCategoriesAPI.getAll();
+      setAllCats(data || []);
+      setFabrics((data || []).filter(c => c.type === 'fabric').map(c => ({ id: c.id, name: c.name })));
+      setOccasions((data || []).filter(c => c.type === 'occasion').map(c => ({ id: c.id, name: c.name })));
+    } catch (e) {
+      console.warn('Categories load failed:', e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { loadCats(); }, []);
+
+  async function addFabric() {
     const v = newFabric.trim();
     if (!v) return;
-    const updated = categoriesDB.addFabric(v);
-    setCats({ ...updated });
-    setNewFabric('');
-    flash('Fabric added!');
+    try {
+      await supabaseCategoriesAPI.add('fabric', v);
+      setNewFabric('');
+      flash('Fabric added!');
+      loadCats();
+    } catch (e) { alert('Error: ' + e.message); }
   }
 
-  function removeFabric(name) {
-    const updated = categoriesDB.removeFabric(name);
-    setCats({ ...updated });
+  async function removeFabric(id) {
+    try {
+      await supabaseCategoriesAPI.remove(id);
+      flash('Removed!');
+      loadCats();
+    } catch (e) { alert('Error: ' + e.message); }
   }
 
-  function addOccasion() {
+  async function addOccasion() {
     const v = newOccasion.trim();
     if (!v) return;
-    const updated = categoriesDB.addOccasion(v);
-    setCats({ ...updated });
-    setNewOccasion('');
-    flash('Occasion added!');
+    try {
+      await supabaseCategoriesAPI.add('occasion', v);
+      setNewOccasion('');
+      flash('Occasion added!');
+      loadCats();
+    } catch (e) { alert('Error: ' + e.message); }
   }
 
-  function removeOccasion(name) {
-    const updated = categoriesDB.removeOccasion(name);
-    setCats({ ...updated });
+  async function removeOccasion(id) {
+    try {
+      await supabaseCategoriesAPI.remove(id);
+      flash('Removed!');
+      loadCats();
+    } catch (e) { alert('Error: ' + e.message); }
   }
 
   function flash(msg) {
@@ -2678,21 +2704,24 @@ function CategoriesManager() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
           <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 16 }}>🏷️ Product Categories</div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>Add or remove fabric types and occasions — they appear in the Add Product dropdown</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>Supabase se sync — har device par same dikhega</div>
         </div>
         {saved && <span style={{ fontSize: 12, color: 'var(--success)', fontWeight: 700 }}>✓ {saved}</span>}
       </div>
 
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)' }}>Loading from Supabase...</div>
+      ) : (
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28 }}>
 
         {/* ── Fabrics ── */}
         <div>
-          <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent)', letterSpacing: 1.2, marginBottom: 12 }}>🧵 FABRIC TYPES ({cats.fabrics?.length || 0})</div>
+          <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent)', letterSpacing: 1.2, marginBottom: 12 }}>🧵 FABRIC TYPES ({fabrics.length})</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14, minHeight: 36 }}>
-            {(cats.fabrics || []).map(f => (
-              <span key={f} style={chipSt}>
-                {f}
-                <button onClick={() => removeFabric(f)}
+            {fabrics.map(f => (
+              <span key={f.id} style={chipSt}>
+                {f.name}
+                <button onClick={() => removeFabric(f.id)}
                   style={{ width: 16, height: 16, borderRadius: '50%', border: 'none', background: 'var(--error)', color: 'white', fontSize: 9, fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, lineHeight: 1 }}>✕</button>
               </span>
             ))}
@@ -2713,12 +2742,12 @@ function CategoriesManager() {
 
         {/* ── Occasions ── */}
         <div>
-          <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent)', letterSpacing: 1.2, marginBottom: 12 }}>🎉 OCCASION TYPES ({cats.occasions?.length || 0})</div>
+          <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent)', letterSpacing: 1.2, marginBottom: 12 }}>🎉 OCCASION TYPES ({occasions.length})</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14, minHeight: 36 }}>
-            {(cats.occasions || []).map(o => (
-              <span key={o} style={chipSt}>
-                {o}
-                <button onClick={() => removeOccasion(o)}
+            {occasions.map(o => (
+              <span key={o.id} style={chipSt}>
+                {o.name}
+                <button onClick={() => removeOccasion(o.id)}
                   style={{ width: 16, height: 16, borderRadius: '50%', border: 'none', background: 'var(--error)', color: 'white', fontSize: 9, fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, lineHeight: 1 }}>✕</button>
               </span>
             ))}
@@ -2737,6 +2766,7 @@ function CategoriesManager() {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

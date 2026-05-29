@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { priceRanges } from '../data/products';
 import { productsDB, categoriesDB } from '../services/db';
-import { productsAPI } from '../services/supabase';
+import { productsAPI, categoriesAPI } from '../services/supabase';
 import { useCart } from '../context/CartContext';
 
 function ProductCard({ product }) {
@@ -115,6 +115,16 @@ export default function Catalog() {
   const [loading, setLoading] = useState(true);
   const [occasions, setOccasions] = useState(() => ['All', ...categoriesDB.getOccasions()]);
   const [fabrics,   setFabrics]   = useState(() => ['All', ...categoriesDB.getFabrics()]);
+
+  // Load categories from Supabase
+  useEffect(() => {
+    categoriesAPI.getOccasions()
+      .then(data => { if (data && data.length) setOccasions(['All', ...data]); })
+      .catch(() => {});
+    categoriesAPI.getFabrics()
+      .then(data => { if (data && data.length) setFabrics(['All', ...data]); })
+      .catch(() => {});
+  }, []);
 
   // Normalize Supabase snake_case → camelCase
   function normalizeProduct(p) {
