@@ -56,9 +56,9 @@ export default function Navbar() {
             <img
               src="/mohanah_logo.svg"
               alt="Mohanah"
-              style={{ height: 62, width: 'auto', borderRadius: 10, display: 'block' }}
+              style={{ height: 52, width: 'auto', borderRadius: 10, display: 'block' }}
             />
-            <div>
+            <div className="nav-brand-text">
               <div style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 900, color: 'var(--primary)', letterSpacing: 3, lineHeight: 1 }}>
                 MOHANAH
               </div>
@@ -92,10 +92,11 @@ export default function Navbar() {
           </div>
 
           {/* Right icons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            {/* Search — hide on mobile when not logged in to save space */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 'auto' }}>
+
+            {/* Search — desktop only */}
             <button onClick={() => setSearchOpen(!searchOpen)}
-              className={!isLoggedIn ? 'nav-hide-mobile' : ''}
+              className="nav-desktop"
               style={{
                 width: 38, height: 38, borderRadius: '50%',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -105,9 +106,9 @@ export default function Navbar() {
                 transition: 'all 0.2s',
               }}>🔍</button>
 
-            {/* Wishlist — hide on mobile when not logged in to save space */}
+            {/* Wishlist — desktop only */}
             <Link to="/wishlist"
-              className={!isLoggedIn ? 'nav-hide-mobile' : ''}
+              className="nav-desktop"
               style={{ position: 'relative', textDecoration: 'none' }}>
               <div style={{
                 width: 38, height: 38, borderRadius: '50%',
@@ -127,7 +128,7 @@ export default function Navbar() {
               )}
             </Link>
 
-            {/* Cart */}
+            {/* Cart — always visible */}
             <Link to="/cart" style={{ position: 'relative', textDecoration: 'none' }}>
               <div style={{
                 width: 38, height: 38, borderRadius: '50%',
@@ -152,7 +153,7 @@ export default function Navbar() {
             {!isLoggedIn && (
               <Link to="/login" style={{ textDecoration: 'none' }}>
                 <button style={{
-                  padding: '7px 14px', borderRadius: 20,
+                  padding: '7px 16px', borderRadius: 20,
                   background: 'var(--primary)', color: 'var(--accent-light)',
                   border: 'none', cursor: 'pointer',
                   fontSize: 12, fontWeight: 700,
@@ -166,26 +167,31 @@ export default function Navbar() {
               </Link>
             )}
 
-            {/* Profile avatar — only shows when logged in */}
+            {/* Profile avatar — only shows when logged in, always visible on mobile too */}
             {isLoggedIn && (
               <Link to="/profile" style={{ textDecoration: 'none' }}>
                 <div style={{
-                  width: 36, height: 36, borderRadius: '50%',
+                  width: 38, height: 38, borderRadius: '50%',
                   background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'var(--accent-light)', fontWeight: 700, fontSize: 13,
+                  color: 'var(--accent-light)', fontWeight: 700, fontSize: 15,
                   fontFamily: 'var(--font-serif)',
-                }}>{initial}</div>
+                  border: '2px solid var(--accent)',
+                  boxShadow: '0 2px 8px rgba(62,74,44,0.25)',
+                  flexShrink: 0,
+                }}>{initial || '👤'}</div>
               </Link>
             )}
 
-            {/* Hamburger */}
+            {/* Hamburger — mobile only */}
             <button onClick={() => setMenuOpen(!menuOpen)}
               className="nav-mobile-btn"
               style={{
                 width: 38, height: 38, borderRadius: 8,
                 display: 'none', alignItems: 'center', justifyContent: 'center',
-                background: 'transparent', fontSize: 20,
+                background: menuOpen ? 'var(--surface-alt)' : 'transparent',
+                border: '1px solid var(--border)',
+                fontSize: 18, color: 'var(--text)',
               }}>☰</button>
           </div>
         </div>
@@ -251,6 +257,10 @@ export default function Navbar() {
           .nav-desktop { display: none !important; }
           .nav-mobile-btn { display: flex !important; }
           .nav-hide-mobile { display: none !important; }
+          .nav-brand-text { display: none !important; }
+        }
+        @media (min-width: 769px) {
+          .nav-brand-text { display: block !important; }
         }
       `}</style>
     </>
