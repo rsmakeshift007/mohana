@@ -238,7 +238,7 @@ export default function Navbar() {
             ))}
             {isLoggedIn && (
               <button onClick={async () => { await signOut(); navigate('/login'); setMenuOpen(false); }}
-                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 0', borderBottom: '1px solid var(--border)', fontSize: 14, fontWeight: 600, color: '#c62828', background: 'none', border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer' }}>
+                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 0', borderTop: 'none', borderLeft: 'none', borderRight: 'none', borderBottom: '1px solid var(--border)', fontSize: 14, fontWeight: 600, color: '#c62828', background: 'none', cursor: 'pointer' }}>
                 🚪 Logout
               </button>
             )}
