@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { settingsDB } from '../services/db';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-// Always reads the latest value saved from Admin → Settings
-function getWANumber() {
-  const s = settingsDB.get();
-  return s.whatsappNumber || '919876543210';
-}
+// ✅ Hardcoded WhatsApp number — change here when number changes
+const WA_NUMBER = '919334836250';
 
 const QUICK_MESSAGES = [
   {
@@ -42,17 +40,26 @@ const QUICK_MESSAGES = [
 
 export default function WhatsAppChat() {
   const [open, setOpen] = useState(false);
+  const { isLoggedIn } = useAuth();
+  const navigate = useNavigate();
 
   function openChat(message) {
-    const number = getWANumber();
-    const url = `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+    const url = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
+  }
+
+  function handleButtonClick() {
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
+    setOpen(o => !o);
   }
 
   return (
     <>
-      {/* Popup menu */}
-      {open && (
+      {/* Popup menu — only when logged in */}
+      {open && isLoggedIn && (
         <div style={{
           position: 'fixed', bottom: 90, right: 24, zIndex: 9998,
           width: 300,
@@ -143,7 +150,7 @@ export default function WhatsAppChat() {
 
       {/* Floating button */}
       <button
-        onClick={() => setOpen(o => !o)}
+        onClick={handleButtonClick}
         style={{
           position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
           width: 58, height: 58, borderRadius: '50%',
@@ -156,11 +163,11 @@ export default function WhatsAppChat() {
         }}
         onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; }}
         onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-        title="Chat with us on WhatsApp"
+        title={isLoggedIn ? 'Chat with us on WhatsApp' : 'Login to chat with us'}
       >
-        {open ? '✕' : '💬'}
+        {open && isLoggedIn ? '✕' : '💬'}
         {/* Pulse ring */}
-        {!open && (
+        {!(open && isLoggedIn) && (
           <span style={{
             position: 'absolute', inset: -4, borderRadius: '50%',
             border: '2px solid rgba(37,211,102,0.4)',
