@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authAPI, bannersAPI, reelsAPI, storageAPI } from '../services/supabase';
+import { authAPI, bannersAPI, reelsAPI, storageAPI, productsAPI as supabaseProductsAPI } from '../services/supabase';
 import { productsDB, ordersDB, customersDB, settingsDB, getDBStats, bannerDB, legalDB, vendorDB, manualOrdersDB, categoriesDB, faqsDB } from '../services/db';
 import { productsAPI, ordersAPI, customersAPI, settingsAPI, getAPIStats, isBackendAvailable } from '../services/api';
 
@@ -2845,25 +2845,45 @@ export default function Admin() {
   }
 
   async function handleSaveProduct(product) {
-    if (useBackend) {
-      try {
-        if (editProduct) {
-          await productsAPI.update(product.id, product);
-        } else {
-          await productsAPI.add(product);
-        }
-        // Also save to localStorage as backup
-        if (editProduct) productsDB.update(product.id, product);
-        else productsDB.add(product);
-      } catch (err) {
-        console.warn('Backend save failed, using localStorage:', err.message);
-        if (editProduct) productsDB.update(product.id, product);
-        else productsDB.add(product);
+    // Always save to localStorage first (instant)
+    if (editProduct) productsDB.update(product.id, product);
+    else productsDB.add(product);
+
+    // Save to Supabase (cross-device)
+    try {
+      // Build a clean object for Supabase (avoid unknown columns)
+      const supabaseProduct = {
+        id:            product.id,
+        name:          product.name,
+        fabric:        product.fabric,
+        occasion:      product.occasion || (product.occasions?.[0] ?? 'Wedding'),
+        occasions:     product.occasions || [product.occasion || 'Wedding'],
+        price:         product.price,
+        original_price: product.originalPrice || null,
+        discount:      product.discount || 0,
+        image_url:     product.imageUrl || '',
+        images:        product.images || [],
+        reels:         product.reels || [],
+        color:         product.color || '#8B1A1A',
+        region:        product.region || '',
+        description:   product.description || '',
+        in_stock:      product.inStock !== false,
+        is_new:        product.isNew || false,
+        is_trending:   product.isTrending || false,
+        rating:        product.rating || 4.5,
+        reviews:       product.reviews || 0,
+        vendor_id:     product.vendorId || null,
+        vendor_name:   product.vendorName || '',
+      };
+      if (editProduct) {
+        await supabaseProductsAPI.update(product.id, supabaseProduct);
+      } else {
+        await supabaseProductsAPI.add(supabaseProduct);
       }
-    } else {
-      if (editProduct) productsDB.update(product.id, product);
-      else productsDB.add(product);
+    } catch (err) {
+      console.warn('Supabase save failed (localStorage used):', err.message);
     }
+
     await refreshProducts();
     setEditProduct(null);
     setActiveSection('inventory');

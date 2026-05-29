@@ -116,11 +116,26 @@ export default function Catalog() {
   const [occasions, setOccasions] = useState(() => ['All', ...categoriesDB.getOccasions()]);
   const [fabrics,   setFabrics]   = useState(() => ['All', ...categoriesDB.getFabrics()]);
 
+  // Normalize Supabase snake_case → camelCase
+  function normalizeProduct(p) {
+    return {
+      ...p,
+      imageUrl:      p.imageUrl      || p.image_url      || '',
+      originalPrice: p.originalPrice ?? p.original_price ?? null,
+      inStock:       p.inStock       ?? p.in_stock       ?? true,
+      isNew:         p.isNew         ?? p.is_new         ?? false,
+      isTrending:    p.isTrending    ?? p.is_trending    ?? false,
+      occasions:     Array.isArray(p.occasions) && p.occasions.length ? p.occasions : (p.occasion ? [p.occasion] : []),
+      images:        Array.isArray(p.images) ? p.images : [],
+      color:         p.color || '#8B1A1A',
+    };
+  }
+
   useEffect(() => {
     setLoading(true);
     productsAPI.getAll()
       .then(data => {
-        if (data && data.length > 0) setProducts(data);
+        if (data && data.length > 0) setProducts(data.map(normalizeProduct));
         else setProducts(productsDB.getAll());
       })
       .catch(() => setProducts(productsDB.getAll()))
