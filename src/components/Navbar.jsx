@@ -93,18 +93,22 @@ export default function Navbar() {
 
           {/* Right icons */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            {/* Search */}
-            <button onClick={() => setSearchOpen(!searchOpen)} style={{
-              width: 38, height: 38, borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: searchOpen ? 'var(--surface-alt)' : 'transparent',
-              border: '1px solid transparent',
-              fontSize: 16, color: 'var(--text)',
-              transition: 'all 0.2s',
-            }}>🔍</button>
+            {/* Search — hide on mobile when not logged in to save space */}
+            <button onClick={() => setSearchOpen(!searchOpen)}
+              className={!isLoggedIn ? 'nav-hide-mobile' : ''}
+              style={{
+                width: 38, height: 38, borderRadius: '50%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: searchOpen ? 'var(--surface-alt)' : 'transparent',
+                border: '1px solid transparent',
+                fontSize: 16, color: 'var(--text)',
+                transition: 'all 0.2s',
+              }}>🔍</button>
 
-            {/* Wishlist */}
-            <Link to="/wishlist" style={{ position: 'relative', textDecoration: 'none' }}>
+            {/* Wishlist — hide on mobile when not logged in to save space */}
+            <Link to="/wishlist"
+              className={!isLoggedIn ? 'nav-hide-mobile' : ''}
+              style={{ position: 'relative', textDecoration: 'none' }}>
               <div style={{
                 width: 38, height: 38, borderRadius: '50%',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -148,12 +152,13 @@ export default function Navbar() {
             {!isLoggedIn && (
               <Link to="/login" style={{ textDecoration: 'none' }}>
                 <button style={{
-                  padding: '7px 16px', borderRadius: 20,
+                  padding: '7px 14px', borderRadius: 20,
                   background: 'var(--primary)', color: 'var(--accent-light)',
                   border: 'none', cursor: 'pointer',
                   fontSize: 12, fontWeight: 700,
                   fontFamily: 'var(--font-sans)',
                   transition: 'all 0.2s',
+                  whiteSpace: 'nowrap',
                 }}
                   onMouseEnter={e => e.currentTarget.style.background = 'var(--primary-dark)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'var(--primary)'}
@@ -245,6 +250,7 @@ export default function Navbar() {
         @media (max-width: 768px) {
           .nav-desktop { display: none !important; }
           .nav-mobile-btn { display: flex !important; }
+          .nav-hide-mobile { display: none !important; }
         }
       `}</style>
     </>

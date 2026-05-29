@@ -2,12 +2,18 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { settingsDB } from '../services/db';
 
+// ✅ Hardcoded contact info — update here when details change
+const WA_NUMBER = '919334836250';
+const PHONE = '+91 93348 36250';
+const EMAIL = 'hello@mohanah.com';
+const ADDRESS = 'Dhanbad, Jharkhand';
+
 export default function Footer() {
   const s = settingsDB.get();
-  const waNumber = s.whatsappNumber || s.phone?.replace(/[^0-9]/g, '') || '919876543210';
-  const email = s.email || 'hello@mohanah.com';
-  const phone = s.phone || '+91 98765 43210';
-  const address = s.address || 'Varanasi, Uttar Pradesh';
+  const waNumber = WA_NUMBER;
+  const email = EMAIL;
+  const phone = PHONE;
+  const address = ADDRESS;
   const instagram = s.instagram || '';
   const facebook = s.facebook || '';
 
