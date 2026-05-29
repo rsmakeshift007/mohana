@@ -146,7 +146,7 @@ export default function Navbar() {
 
             {/* Login button — only when not logged in */}
             {!isLoggedIn && (
-              <Link to="/login" style={{ textDecoration: 'none' }} className="nav-desktop">
+              <Link to="/login" style={{ textDecoration: 'none' }}>
                 <button style={{
                   padding: '7px 16px', borderRadius: 20,
                   background: 'var(--primary)', color: 'var(--accent-light)',

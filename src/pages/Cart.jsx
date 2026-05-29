@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function Cart() {
   const { items, subtotal, savings, couponDiscount, delivery, giftWrapCharge, total, cartCount, giftWrap, coupon, dispatch, applyCoupon } = useCart();
+  const { isLoggedIn } = useAuth();
   const [couponInput, setCouponInput] = useState('');
   const [couponMsg, setCouponMsg] = useState(null);
   const navigate = useNavigate();
@@ -13,6 +15,29 @@ export default function Cart() {
     setCouponMsg(result);
     if (result.success) setCouponInput('');
     setTimeout(() => setCouponMsg(null), 3000);
+  }
+
+  // Not logged in — show login prompt
+  if (!isLoggedIn) {
+    return (
+      <div className="page" style={{ paddingTop: 68, minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', padding: '0 24px' }}>
+          <div style={{ fontSize: 72, marginBottom: 16 }}>🔐</div>
+          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, marginBottom: 8 }}>Login Required</h2>
+          <p style={{ color: 'var(--text-sec)', marginBottom: 28, fontSize: 14 }}>
+            Please login to view your cart and place orders.
+          </p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button onClick={() => navigate('/login')} className="btn btn-primary btn-lg">
+              🔑 Login / Sign Up
+            </button>
+            <button onClick={() => navigate('/catalog')} className="btn btn-outline btn-lg">
+              Browse Sarees
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (items.length === 0) {
