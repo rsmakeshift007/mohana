@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { products } from '../data/products';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { reviewsDB } from '../services/db';
+import { reviewsDB, productsDB } from '../services/db';
+import { productsAPI } from '../services/supabase';
 
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { dispatch, wishlist, items } = useCart();
   const { user, isLoggedIn } = useAuth();
-  const product = products.find(p => p.id === id);
+  const [product, setProduct] = useState(() => productsDB.getAll().find(p => p.id === id) || null);
+  const [loadingProduct, setLoadingProduct] = useState(!product);
   const [qty, setQty] = useState(1);
   const [activeTab, setActiveTab] = useState('desc');
   const [added, setAdded] = useState(false);
@@ -24,6 +25,28 @@ export default function ProductDetail() {
   useEffect(() => {
     if (id) setProductReviews(reviewsDB.getByProduct(id));
   }, [id]);
+
+  useEffect(() => {
+    if (!product) setLoadingProduct(true);
+    productsAPI.getById(id)
+      .then(data => { if (data) setProduct(data); })
+      .catch(() => {
+        const local = productsDB.getAll().find(p => p.id === id);
+        if (local) setProduct(local);
+      })
+      .finally(() => setLoadingProduct(false));
+  }, [id]);
+
+  if (loadingProduct) {
+    return (
+      <div className="page" style={{ paddingTop: 68, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '70vh' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>🥻</div>
+          <p style={{ color: 'var(--text-sec)' }}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!product) {
     return (

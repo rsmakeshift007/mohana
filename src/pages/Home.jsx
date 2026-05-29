@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { products } from '../data/products';
 import { useCart } from '../context/CartContext';
 import HeroBanner from '../components/HeroBanner';
-import { reviewsDB } from '../services/db';
+import { reviewsDB, productsDB } from '../services/db';
+import { productsAPI } from '../services/supabase';
 
 function ProductCard({ product }) {
   const { dispatch, wishlist } = useCart();
@@ -152,10 +152,17 @@ const FALLBACK_REVIEWS = [
 export default function Home() {
   const navigate = useNavigate();
   const [homeReviews, setHomeReviews] = useState([]);
+  const [allProducts, setAllProducts] = useState(() => productsDB.getAll());
 
   useEffect(() => {
     const real = reviewsDB.getRecent(6).filter(r => r.productId !== '__app__');
     setHomeReviews(real.length >= 3 ? real.slice(0, 3) : FALLBACK_REVIEWS);
+  }, []);
+
+  useEffect(() => {
+    productsAPI.getAll()
+      .then(data => { if (data && data.length > 0) setAllProducts(data); })
+      .catch(() => setAllProducts(productsDB.getAll()));
   }, []);
 
   const occasions = [
@@ -167,9 +174,10 @@ export default function Home() {
     { icon: '💼', label: 'Office', color: '#0D47A1' },
   ];
 
-  const newArrivals = products.filter(p => p.isNew);
-  const trending = products.filter(p => p.isTrending);
-  const bridal = products.filter(p => p.occasion === 'Bridal' || p.occasion === 'Wedding');
+  const getOcc = (p) => Array.isArray(p.occasions) && p.occasions.length ? p.occasions : (p.occasion ? [p.occasion] : []);
+  const newArrivals = allProducts.filter(p => p.isNew);
+  const trending = allProducts.filter(p => p.isTrending);
+  const bridal = allProducts.filter(p => getOcc(p).some(o => o === 'Bridal' || o === 'Wedding'));
 
   return (
     <div className="page" style={{ paddingTop: 68 }}>
@@ -266,7 +274,7 @@ export default function Home() {
 
             {/* Right: Floating product cards */}
             <div className="hero-products-desktop" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {products.slice(0, 3).map((p, i) => (
+              {allProducts.slice(0, 3).map((p, i) => (
                 <div key={p.id} style={{
                   background: 'rgba(255,255,255,0.08)',
                   backdropFilter: 'blur(10px)',

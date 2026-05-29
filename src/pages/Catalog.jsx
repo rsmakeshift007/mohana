@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { products, occasions, fabrics, priceRanges } from '../data/products';
+import { priceRanges } from '../data/products';
+import { productsDB, categoriesDB } from '../services/db';
+import { productsAPI } from '../services/supabase';
 import { useCart } from '../context/CartContext';
 
 function ProductCard({ product }) {
@@ -107,6 +109,23 @@ export default function Catalog() {
   const [showInStock, setShowInStock] = useState(false);
   const searchQuery = searchParams.get('search') || '';
   const filterType = searchParams.get('filter') || '';
+
+  // ── Products: load from Supabase, fallback to localStorage ──
+  const [products, setProducts] = useState(() => productsDB.getAll());
+  const [loading, setLoading] = useState(true);
+  const [occasions, setOccasions] = useState(() => ['All', ...categoriesDB.getOccasions()]);
+  const [fabrics,   setFabrics]   = useState(() => ['All', ...categoriesDB.getFabrics()]);
+
+  useEffect(() => {
+    setLoading(true);
+    productsAPI.getAll()
+      .then(data => {
+        if (data && data.length > 0) setProducts(data);
+        else setProducts(productsDB.getAll());
+      })
+      .catch(() => setProducts(productsDB.getAll()))
+      .finally(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
     if (searchParams.get('occasion')) setSelectedOccasion(searchParams.get('occasion'));
@@ -281,7 +300,13 @@ export default function Catalog() {
               </div>
             </div>
 
-            {filtered.length === 0 ? (
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '80px 20px' }}>
+                <div style={{ fontSize: 48, marginBottom: 12, animation: 'spin 1s linear infinite', display: 'inline-block' }}>🥻</div>
+                <p style={{ color: 'var(--text-sec)', fontSize: 14 }}>Sarees load ho rahi hain...</p>
+                <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+              </div>
+            ) : filtered.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '80px 20px' }}>
                 <div style={{ fontSize: 64, marginBottom: 16 }}>🔍</div>
                 <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, marginBottom: 8 }}>No sarees found</h3>
