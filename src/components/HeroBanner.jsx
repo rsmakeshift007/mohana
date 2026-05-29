@@ -67,9 +67,9 @@ function usePanel(list) {
     setTimeout(() => { setIdx(next); setBusy(false); setDir(null); }, 340);
   }, [busy, total]);
 
-  const next = useCallback(() => goTo((idx + 1) % total, 'up'),            [idx, total, goTo]);
-  const prev = useCallback(() => goTo((idx - 1 + total) % total, 'down'),  [idx, total, goTo]);
-  return { idx, dir, busy, next, prev, goTo, total };
+  const next = useCallback(() => total > 0 && goTo((idx + 1) % total, 'up'),           [idx, total, goTo]);
+  const prev = useCallback(() => total > 0 && goTo((idx - 1 + total) % total, 'down'), [idx, total, goTo]);
+  return { idx: Math.min(idx, Math.max(total - 1, 0)), dir, busy, next, prev, goTo, total };
 }
 
 function panelStyle(busy, dir) {
@@ -309,8 +309,8 @@ function ReelPanel({ reelList, reel, imgList, isMobile }) {
 
 // ─── Main HeroBanner ──────────────────────────────────────────────────────────
 export default function HeroBanner() {
-  const [imgList,  setImgList]  = useState(buildImageList);
-  const [reelList, setReelList] = useState(buildReelList);
+  const [imgList,  setImgList]  = useState([]);
+  const [reelList, setReelList] = useState([]);
   const img  = usePanel(imgList);
   const reel = usePanel(reelList);
 
@@ -329,24 +329,24 @@ export default function HeroBanner() {
     bannersAPI.getAll()
       .then(data => {
         if (data && data.length > 0) {
-          setImgList(data.map((b, i) => {
-            const def = DEFAULT_IMAGES[i % DEFAULT_IMAGES.length];
-            return {
-              id: b.id,
-              src: b.image_url,
-              title:    b.title    || def.title,
-              subtitle: b.subtitle || def.subtitle,
-              desc:     b.description || def.desc,
-              price:    b.price    || def.price,
-              badge:    b.badge    || def.badge,
-              cta:      b.cta_text || def.cta,
-              ctaLink:  b.cta_link || def.ctaLink,
-              color:    def.color,
-            };
-          }));
+          setImgList(data.map((b, i) => ({
+            id:       b.id,
+            src:      b.image_url,
+            title:    b.title    || '',
+            subtitle: b.subtitle || '',
+            desc:     b.description || '',
+            price:    b.price    || '',
+            badge:    b.badge    || '',
+            cta:      b.cta_text || 'Shop Now',
+            ctaLink:  b.cta_link || '/catalog',
+            color:    DEFAULT_IMAGES[i % DEFAULT_IMAGES.length]?.color || '#8B1A1A',
+          })));
+        } else {
+          // Koi banner nahi → empty (no hardcoded fallback)
+          setImgList([]);
         }
       })
-      .catch(() => {}); // fallback to defaults silently
+      .catch(() => setImgList([]));
 
     reelsAPI.getAll()
       .then(data => {
@@ -354,100 +354,90 @@ export default function HeroBanner() {
           setReelList(data.map((r, i) => ({
             id:    r.id,
             src:   r.video_url,
-            label: r.label || DEFAULT_REELS[i % DEFAULT_REELS.length]?.label || 'Reel',
+            label: r.label || `Reel ${i + 1}`,
           })));
+        } else {
+          setReelList([]);
         }
       })
-      .catch(() => {});
+      .catch(() => setReelList([]));
   }, []);
 
   const DESKTOP_HEIGHT = 560;
   const MOBILE_HEIGHT  = 480;
   const height = isMobile ? MOBILE_HEIGHT : DESKTOP_HEIGHT;
 
+  // Jab tak Supabase se data load ho raha hai ya koi banner nahi
+  if (imgList.length === 0) return null;
+
+  const hasReels = reelList.length > 0;
+
   // ── MOBILE LAYOUT ──────────────────────────────────────────────────────────
   if (isMobile) {
     return (
       <div style={{ width: '100%', userSelect: 'none' }}>
 
-        {/* Toggle tabs */}
-        <div style={{
-          display: 'flex', background: '#0A0F0A',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
-        }}>
-          {[
-            { key: 'photos', icon: '📸', label: 'Photos' },
-            { key: 'reels',  icon: '🎬', label: 'Reels'  },
-          ].map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setMobileTab(tab.key)}
-              style={{
-                flex: 1,
-                padding: '12px 8px',
+        {/* Toggle tabs — sirf tab dikhao jab reels hon */}
+        {hasReels && (
+          <div style={{ display: 'flex', background: '#0A0F0A', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+            {[
+              { key: 'photos', icon: '📸', label: 'Photos' },
+              { key: 'reels',  icon: '🎬', label: 'Reels'  },
+            ].map(tab => (
+              <button key={tab.key} onClick={() => setMobileTab(tab.key)} style={{
+                flex: 1, padding: '12px 8px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
                 background: mobileTab === tab.key ? 'rgba(201,149,108,0.15)' : 'transparent',
                 border: 'none', cursor: 'pointer',
                 borderBottom: mobileTab === tab.key ? '2.5px solid var(--accent)' : '2.5px solid transparent',
-                transition: 'all 0.2s',
-                fontFamily: 'var(--font-sans)',
+                transition: 'all 0.2s', fontFamily: 'var(--font-sans)',
               }}>
-              <span style={{ fontSize: 16 }}>{tab.icon}</span>
-              <span style={{
-                fontSize: 13, fontWeight: 800, letterSpacing: 0.5,
-                color: mobileTab === tab.key ? 'var(--accent)' : 'rgba(255,255,255,0.45)',
-              }}>{tab.label}</span>
-              {tab.key === 'reels' && (
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: mobileTab === 'reels' ? '#FF3B30' : 'rgba(255,255,255,0.25)', animation: mobileTab === 'reels' ? 'pulse 1.5s infinite' : 'none' }} />
-              )}
-            </button>
-          ))}
-        </div>
+                <span style={{ fontSize: 16 }}>{tab.icon}</span>
+                <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: 0.5, color: mobileTab === tab.key ? 'var(--accent)' : 'rgba(255,255,255,0.45)' }}>{tab.label}</span>
+                {tab.key === 'reels' && (
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: mobileTab === 'reels' ? '#FF3B30' : 'rgba(255,255,255,0.25)', animation: mobileTab === 'reels' ? 'pulse 1.5s infinite' : 'none' }} />
+                )}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Panel */}
         <div style={{ height: MOBILE_HEIGHT, position: 'relative', overflow: 'hidden' }}>
-          {mobileTab === 'photos' ? (
+          {(!hasReels || mobileTab === 'photos') ? (
             <PhotoPanel imgList={imgList} img={img} isMobile={true} />
           ) : (
             <ReelPanel reelList={reelList} reel={reel} imgList={imgList} isMobile={true} />
           )}
         </div>
 
-        <style>{`
-          @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50%       { opacity: 0.5; transform: scale(1.15); }
-          }
-        `}</style>
+        <style>{`@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.15)} }`}</style>
       </div>
     );
   }
 
-  // ── DESKTOP LAYOUT (split 55 / 45) ────────────────────────────────────────
+  // ── DESKTOP LAYOUT ────────────────────────────────────────────────────────
+  // Agar reels nahi hain → photos full width dikhao
   return (
     <div style={{ width: '100%', height: DESKTOP_HEIGHT, position: 'relative', overflow: 'hidden', userSelect: 'none' }}>
       <div style={{ display: 'flex', height: '100%' }}>
 
-        {/* Left: Photos */}
-        <div style={{ flex: '0 0 55%', position: 'relative', overflow: 'hidden' }}>
+        {/* Photos — full width if no reels, else 55% */}
+        <div style={{ flex: hasReels ? '0 0 55%' : '1', position: 'relative', overflow: 'hidden' }}>
           <PhotoPanel imgList={imgList} img={img} isMobile={false} />
         </div>
 
-        {/* Divider */}
-        <div style={{ width: 2, background: 'rgba(255,255,255,0.07)', flexShrink: 0 }} />
-
-        {/* Right: Reels */}
-        <div style={{ flex: '0 0 calc(45% - 2px)', position: 'relative', overflow: 'hidden' }}>
-          <ReelPanel reelList={reelList} reel={reel} imgList={imgList} isMobile={false} />
-        </div>
+        {/* Reels panel — sirf tab dikhao jab reels hon */}
+        {hasReels && (
+          <>
+            <div style={{ width: 2, background: 'rgba(255,255,255,0.07)', flexShrink: 0 }} />
+            <div style={{ flex: '0 0 calc(45% - 2px)', position: 'relative', overflow: 'hidden' }}>
+              <ReelPanel reelList={reelList} reel={reel} imgList={imgList} isMobile={false} />
+            </div>
+          </>
+        )}
       </div>
-
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50%       { opacity: 0.5; transform: scale(1.15); }
-        }
-      `}</style>
+      <style>{`@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.15)} }`}</style>
     </div>
   );
 }
