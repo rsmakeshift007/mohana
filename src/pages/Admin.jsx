@@ -2861,15 +2861,16 @@ export default function Admin() {
   }, []);
 
   async function refreshProducts() {
-    if (useBackend) {
-      try {
-        const data = await productsAPI.getAll();
+    // Try Supabase first
+    try {
+      const data = await supabaseProductsAPI.getAll();
+      if (data && data.length > 0) {
         setProductList(data);
-        const s = await getAPIStats();
-        setStats(s);
+        setStats(getDBStats());
         return;
-      } catch {}
-    }
+      }
+    } catch {}
+    // Fallback to localStorage
     setProductList(productsDB.getAll());
     setStats(getDBStats());
   }
@@ -2881,9 +2882,8 @@ export default function Admin() {
 
     // Save to Supabase (cross-device)
     try {
-      // Build a clean object for Supabase (avoid unknown columns)
+      // Build clean object — do NOT send id for new products (Supabase auto-generates UUID)
       const supabaseProduct = {
-        id:            product.id,
         name:          product.name,
         fabric:        product.fabric,
         occasion:      product.occasion || (product.occasions?.[0] ?? 'Wedding'),
@@ -2902,16 +2902,23 @@ export default function Admin() {
         is_trending:   product.isTrending || false,
         rating:        product.rating || 4.5,
         reviews:       product.reviews || 0,
-        vendor_id:     product.vendorId || null,
+        vendor_id:     null,  // skip vendor_id to avoid UUID type error
         vendor_name:   product.vendorName || '',
       };
-      if (editProduct) {
-        await supabaseProductsAPI.update(product.id, supabaseProduct);
-      } else {
-        await supabaseProductsAPI.add(supabaseProduct);
+      if (editProduct && editProduct._supabase_id) {
+        // Update existing Supabase row using its real UUID
+        await supabaseProductsAPI.update(editProduct._supabase_id, supabaseProduct);
+      } else if (!editProduct) {
+        // Insert new row — get back the Supabase UUID and save it
+        const saved = await supabaseProductsAPI.add(supabaseProduct);
+        if (saved?.id) {
+          // Store Supabase UUID in localStorage product for future edits
+          productsDB.update(product.id, { ...product, _supabase_id: saved.id });
+        }
       }
     } catch (err) {
       console.warn('Supabase save failed (localStorage used):', err.message);
+      alert('⚠️ Supabase error: ' + err.message);
     }
 
     await refreshProducts();
