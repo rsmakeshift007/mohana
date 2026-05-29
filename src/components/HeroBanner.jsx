@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { bannersAPI, reelsAPI } from '../services/supabase';
 
 // ─── Default image slides ─────────────────────────────────────────────────────
 const DEFAULT_IMAGES = [
@@ -323,16 +324,41 @@ export default function HeroBanner() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // Reload when admin saves banner
+  // Fetch banners + reels from Supabase (live data — sabko dikhega)
   useEffect(() => {
-    function onStorage(e) {
-      if (e.key === 'mohanah_db_banner') {
-        setImgList(buildImageList());
-        setReelList(buildReelList());
-      }
-    }
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    bannersAPI.getAll()
+      .then(data => {
+        if (data && data.length > 0) {
+          setImgList(data.map((b, i) => {
+            const def = DEFAULT_IMAGES[i % DEFAULT_IMAGES.length];
+            return {
+              id: b.id,
+              src: b.image_url,
+              title:    b.title    || def.title,
+              subtitle: b.subtitle || def.subtitle,
+              desc:     b.description || def.desc,
+              price:    b.price    || def.price,
+              badge:    b.badge    || def.badge,
+              cta:      b.cta_text || def.cta,
+              ctaLink:  b.cta_link || def.ctaLink,
+              color:    def.color,
+            };
+          }));
+        }
+      })
+      .catch(() => {}); // fallback to defaults silently
+
+    reelsAPI.getAll()
+      .then(data => {
+        if (data && data.length > 0) {
+          setReelList(data.map((r, i) => ({
+            id:    r.id,
+            src:   r.video_url,
+            label: r.label || DEFAULT_REELS[i % DEFAULT_REELS.length]?.label || 'Reel',
+          })));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const DESKTOP_HEIGHT = 560;

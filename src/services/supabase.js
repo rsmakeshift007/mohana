@@ -359,6 +359,84 @@ export const bannersAPI = {
 };
 
 // ─────────────────────────────────────────────
+// STORAGE (image + video uploads)
+// ─────────────────────────────────────────────
+export const storageAPI = {
+  async uploadImage(file, folder = 'banners') {
+    const ext = file.name.split('.').pop().toLowerCase() || 'jpg';
+    const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+    const { data, error } = await supabase.storage
+      .from('mohanah-images')
+      .upload(fileName, file, { cacheControl: '3600', upsert: false });
+    if (error) throw error;
+    const { data: { publicUrl } } = supabase.storage
+      .from('mohanah-images')
+      .getPublicUrl(data.path);
+    return publicUrl;
+  },
+
+  async uploadVideo(file, folder = 'reels') {
+    const ext = file.name.split('.').pop().toLowerCase() || 'mp4';
+    const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+    const { data, error } = await supabase.storage
+      .from('mohanah-images')
+      .upload(fileName, file, { cacheControl: '3600', upsert: false, contentType: file.type });
+    if (error) throw error;
+    const { data: { publicUrl } } = supabase.storage
+      .from('mohanah-images')
+      .getPublicUrl(data.path);
+    return publicUrl;
+  },
+
+  async deleteFile(url) {
+    try {
+      const path = url.split('/mohanah-images/')[1];
+      if (!path) return;
+      await supabase.storage.from('mohanah-images').remove([decodeURIComponent(path)]);
+    } catch {}
+  },
+};
+
+// ─────────────────────────────────────────────
+// REELS
+// ─────────────────────────────────────────────
+export const reelsAPI = {
+  async getAll() {
+    const { data, error } = await supabase
+      .from('reels')
+      .select('*')
+      .eq('is_active', true)
+      .order('sort_order');
+    if (error) throw error;
+    return data;
+  },
+
+  async getAllAdmin() {
+    const { data, error } = await supabase
+      .from('reels')
+      .select('*')
+      .order('sort_order');
+    if (error) throw error;
+    return data;
+  },
+
+  async add(reel) {
+    const { data, error } = await supabase
+      .from('reels')
+      .insert([reel])
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async delete(id) {
+    const { error } = await supabase.from('reels').delete().eq('id', id);
+    if (error) throw error;
+  },
+};
+
+// ─────────────────────────────────────────────
 // SETTINGS (key-value store)
 // ─────────────────────────────────────────────
 export const settingsAPI = {

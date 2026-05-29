@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authAPI } from '../services/supabase';
+import { authAPI, bannersAPI, reelsAPI, storageAPI } from '../services/supabase';
 import { productsDB, ordersDB, customersDB, settingsDB, getDBStats, bannerDB, legalDB, vendorDB, manualOrdersDB, categoriesDB, faqsDB } from '../services/db';
 import { productsAPI, ordersAPI, customersAPI, settingsAPI, getAPIStats, isBackendAvailable } from '../services/api';
 
@@ -40,7 +40,7 @@ function ImageUploadZone({ images, onAdd, onRemove, onSetMain }) {
     Array.from(files).forEach(file => {
       if (!file.type.startsWith('image/')) return;
       const reader = new FileReader();
-      reader.onload = e => onAdd({ id: Date.now() + Math.random(), src: e.target.result, name: file.name, size: file.size });
+      reader.onload = e => onAdd({ id: Date.now() + Math.random(), src: e.target.result, file, name: file.name, size: file.size });
       reader.readAsDataURL(file);
     });
   }
@@ -120,7 +120,7 @@ function ImageUploadZone({ images, onAdd, onRemove, onSetMain }) {
 }
 
 // ─── Reel/Video Upload Zone ──────────────────
-function ReelUploadZone({ reels, onAdd, onRemove }) {
+function ReelUploadZone({ reels, onAdd, onRemove, onLabelChange }) {
   const inputRef = useRef();
   const [dragging, setDragging] = useState(false);
 
@@ -128,7 +128,7 @@ function ReelUploadZone({ reels, onAdd, onRemove }) {
     Array.from(files).forEach(file => {
       if (!file.type.startsWith('video/')) return;
       const url = URL.createObjectURL(file);
-      onAdd({ id: Date.now() + Math.random(), src: url, name: file.name, size: (file.size / 1024 / 1024).toFixed(1) });
+      onAdd({ id: Date.now() + Math.random(), src: url, file, name: file.name, label: file.name.replace(/\.[^.]+$/, ''), size: (file.size / 1024 / 1024).toFixed(1) });
     });
   }
 
@@ -171,7 +171,12 @@ function ReelUploadZone({ reels, onAdd, onRemove }) {
             <div key={reel.id} style={{ display: 'flex', gap: 10, alignItems: 'center', background: 'var(--surface-alt)', borderRadius: 10, padding: '8px 12px', border: '1px solid var(--border)' }}>
               <video src={reel.src} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 6, background: '#000' }} muted />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{reel.name}</div>
+                <input
+                  value={reel.label || reel.name || ''}
+                  onChange={e => onLabelChange && onLabelChange(reel.id, e.target.value)}
+                  placeholder="Reel label (e.g. Banarasi Draping)"
+                  style={{ width: '100%', padding: '5px 8px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 12, fontFamily: 'var(--font-sans)', background: 'var(--bg)', color: 'var(--text)', outline: 'none', marginBottom: 3 }}
+                />
                 <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{reel.size} MB · Reel #{i + 1}</div>
               </div>
               <button onClick={() => onRemove(reel.id)}
@@ -233,36 +238,39 @@ function ProductForm({ onSave, onCancel, editProduct }) {
   const inputSt = { width: '100%', padding: '10px 13px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, fontFamily: 'var(--font-sans)', background: 'var(--bg)', outline: 'none', color: 'var(--text)' };
   const labelSt = { fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1, display: 'block', marginBottom: 5 };
 
-  function handleSave() {
+  async function handleSave() {
     if (!form.name || !form.price) { alert('Name and price are required!'); return; }
     setSaving(true);
+    try {
+      // Upload new images to Supabase Storage
+      const uploadedImages = await Promise.all(
+        images.map(async img => {
+          if (img.file) {
+            const url = await storageAPI.uploadImage(img.file, 'products');
+            return { id: img.id, src: url, name: img.name };
+          }
+          return { id: img.id, src: img.src, name: img.name };
+        })
+      );
 
-    // Compress images to max 800px width before saving (keeps localStorage small)
-    const compressImage = (src, maxWidth = 800) => new Promise(resolve => {
-      const img = new Image();
-      img.onload = () => {
-        const scale = Math.min(1, maxWidth / img.width);
-        const canvas = document.createElement('canvas');
-        canvas.width  = img.width  * scale;
-        canvas.height = img.height * scale;
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', 0.82));
-      };
-      img.src = src;
-    });
+      // Upload new reels to Supabase Storage
+      const uploadedReels = await Promise.all(
+        reels.map(async r => {
+          if (r.file) {
+            const url = await storageAPI.uploadVideo(r.file, 'reels');
+            return { id: r.id, src: url, name: r.name, label: r.label || r.name };
+          }
+          return r;
+        })
+      );
 
-    Promise.all(images.map(async img => ({
-      ...img,
-      src: img.src.startsWith('data:') ? await compressImage(img.src) : img.src,
-    }))).then(compressedImages => {
-      // First image becomes the main display URL
-      const mainImageUrl = compressedImages[0]?.src || form.imageUrl || '';
+      const mainImageUrl = uploadedImages[0]?.src || form.imageUrl || '';
 
       onSave({
         ...form,
         id:            editProduct?.id || String(Date.now()),
-        images:        compressedImages,
-        reels,
+        images:        uploadedImages,
+        reels:         uploadedReels,
         imageUrl:      mainImageUrl,
         price:         Number(form.price),
         originalPrice: form.originalPrice ? Number(form.originalPrice) : null,
@@ -272,8 +280,11 @@ function ProductForm({ onSave, onCancel, editProduct }) {
         isNew:         true,
         isTrending:    false,
       });
+    } catch (err) {
+      alert('❌ Upload failed: ' + err.message);
+    } finally {
       setSaving(false);
-    });
+    }
   }
 
   return (
@@ -779,72 +790,148 @@ function InventorySection({ products, onEdit, onDelete, onToggleStock }) {
 
 // ─── Banner Management ───────────────────────
 function BannerSection() {
-  const saved = bannerDB.get();
-  const [bannerImages, setBannerImages] = useState(saved.images || []);
-  const [bannerReels,  setBannerReels]  = useState(saved.reels  || []);
+  const [bannerImages, setBannerImages] = useState([]);
+  const [bannerReels,  setBannerReels]  = useState([]);
   const [savingImgs,   setSavingImgs]   = useState(false);
   const [savingReels,  setSavingReels]  = useState(false);
   const [imgSaved,     setImgSaved]     = useState(false);
   const [reelSaved,    setReelSaved]    = useState(false);
   const [showMeta,     setShowMeta]     = useState(true);
+  const [uploadMsg,    setUploadMsg]    = useState('');
+  const [loading,      setLoading]      = useState(true);
 
   // All products for the link picker
   const allProducts = productsDB.getAll();
 
+  // Load existing banners + reels from Supabase on mount
+  useEffect(() => {
+    Promise.all([
+      bannersAPI.getAllAdmin().catch(() => []),
+      reelsAPI.getAllAdmin().catch(() => []),
+    ]).then(([bData, rData]) => {
+      if (bData.length > 0) {
+        setBannerImages(bData.map(b => ({
+          id: b.id, src: b.image_url, file: null, dbId: b.id,
+          title: b.title, subtitle: b.subtitle, desc: b.description,
+          price: b.price, badge: b.badge,
+          cta: b.cta_text, ctaLink: b.cta_link,
+        })));
+      }
+      if (rData.length > 0) {
+        setBannerReels(rData.map(r => ({
+          id: r.id, src: r.video_url, file: null, dbId: r.id,
+          name: r.label || 'Reel', label: r.label || '', size: '',
+        })));
+      }
+    }).finally(() => setLoading(false));
+  }, []);
+
   const metaLabelSt = { fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 0.5, display: 'block', marginBottom: 3 };
   const metaInputSt = { width: '100%', padding: '7px 10px', borderRadius: 7, border: '1px solid var(--border)', fontSize: 12, fontFamily: 'var(--font-sans)', background: 'var(--bg)', outline: 'none', color: 'var(--text)', boxSizing: 'border-box' };
 
-  // Update a single metadata field on a banner image
   function updateImageMeta(id, key, value) {
     setBannerImages(prev => prev.map(img => img.id === id ? { ...img, [key]: value } : img));
   }
 
-  // Compress images (same as product form)
-  function compressImage(src, maxWidth = 1200) {
-    return new Promise(resolve => {
-      const img = new Image();
-      img.onload = () => {
-        const scale  = Math.min(1, maxWidth / img.width);
-        const canvas = document.createElement('canvas');
-        canvas.width  = img.width  * scale;
-        canvas.height = img.height * scale;
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', 0.85));
-      };
-      img.src = src;
-    });
-  }
-
   async function handleSaveImages() {
     setSavingImgs(true);
+    setUploadMsg('🔄 Uploading to Supabase...');
     try {
-      const compressed = await Promise.all(
-        bannerImages.map(async img => ({
-          ...img,
-          src: img.src.startsWith('data:') ? await compressImage(img.src) : img.src,
-        }))
+      // 1. Upload any new files to Supabase Storage
+      const processed = await Promise.all(
+        bannerImages.map(async (img, i) => {
+          let imageUrl = img.src;
+          if (img.file) {
+            setUploadMsg(`📤 Uploading photo ${i + 1} of ${bannerImages.length}...`);
+            imageUrl = await storageAPI.uploadImage(img.file, 'banners');
+          }
+          return { ...img, imageUrl, sort_order: i };
+        })
       );
-      setBannerImages(compressed);
-      bannerDB.saveImages(compressed);
+
+      // 2. Delete all existing banners from Supabase
+      setUploadMsg('💾 Saving to database...');
+      const existing = await bannersAPI.getAllAdmin();
+      await Promise.all(existing.map(b => bannersAPI.delete(b.id)));
+
+      // 3. Insert new banners
+      await Promise.all(processed.map(img =>
+        bannersAPI.add({
+          image_url: img.imageUrl,
+          title: img.title || '',
+          subtitle: img.subtitle || '',
+          description: img.desc || '',
+          price: img.price || '',
+          badge: img.badge || '',
+          cta_text: img.cta || 'Shop Now',
+          cta_link: img.ctaLink || '/catalog',
+          sort_order: img.sort_order,
+          is_active: true,
+        })
+      ));
+
+      // 4. Refresh state (clear file references, update src)
+      setBannerImages(processed.map(img => ({ ...img, src: img.imageUrl, file: null })));
       setImgSaved(true);
+      setUploadMsg('');
       setTimeout(() => setImgSaved(false), 3000);
+    } catch (err) {
+      alert('❌ Error: ' + err.message);
+      setUploadMsg('');
     } finally {
       setSavingImgs(false);
     }
   }
 
-  function handleSaveReels() {
+  async function handleSaveReels() {
     setSavingReels(true);
-    const reelMeta = bannerReels.map(r => ({ ...r }));
-    bannerDB.saveReels(reelMeta);
-    setReelSaved(true);
-    setTimeout(() => { setSavingReels(false); setReelSaved(false); }, 3000);
+    setUploadMsg('🔄 Uploading reels...');
+    try {
+      // 1. Upload new video files
+      const processed = await Promise.all(
+        bannerReels.map(async (reel, i) => {
+          let videoUrl = reel.src;
+          if (reel.file) {
+            setUploadMsg(`📤 Uploading reel ${i + 1} of ${bannerReels.length}...`);
+            videoUrl = await storageAPI.uploadVideo(reel.file, 'reels');
+          }
+          return { ...reel, videoUrl, sort_order: i };
+        })
+      );
+
+      // 2. Delete existing reels
+      setUploadMsg('💾 Saving reels...');
+      const existing = await reelsAPI.getAllAdmin();
+      await Promise.all(existing.map(r => reelsAPI.delete(r.id)));
+
+      // 3. Insert new reels
+      await Promise.all(processed.map(r =>
+        reelsAPI.add({
+          video_url: r.videoUrl,
+          label: r.label || r.name || 'Reel',
+          sort_order: r.sort_order,
+          is_active: true,
+        })
+      ));
+
+      setBannerReels(processed.map(r => ({ ...r, src: r.videoUrl, file: null })));
+      setReelSaved(true);
+      setUploadMsg('');
+      setTimeout(() => { setSavingReels(false); setReelSaved(false); }, 3000);
+    } catch (err) {
+      alert('❌ Error: ' + err.message);
+      setUploadMsg('');
+      setSavingReels(false);
+    }
   }
+
+  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-sec)' }}>⏳ Loading banners from Supabase...</div>;
 
   return (
     <div>
       <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 900, marginBottom: 6 }}>🖼️ Banner & Reels Management</h2>
-      <p style={{ fontSize: 13, color: 'var(--text-sec)', marginBottom: 24 }}>Upload photos and reels for the homepage banner slider.</p>
+      <p style={{ fontSize: 13, color: 'var(--text-sec)', marginBottom: 24 }}>Upload photos and reels — <strong>sabko dikhega</strong> (Supabase storage se).</p>
+      {uploadMsg && <div style={{ background: '#E3F2FD', border: '1px solid #90CAF9', borderRadius: 8, padding: '10px 16px', marginBottom: 16, fontSize: 13, fontWeight: 600, color: '#1565C0' }}>{uploadMsg}</div>}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
 
@@ -1020,6 +1107,7 @@ function BannerSection() {
             reels={bannerReels}
             onAdd={r => setBannerReels(prev => [...prev, r])}
             onRemove={id => setBannerReels(prev => prev.filter(r => r.id !== id))}
+            onLabelChange={(id, val) => setBannerReels(prev => prev.map(r => r.id === id ? { ...r, label: val } : r))}
           />
           <button
             className="btn btn-primary btn-sm"
