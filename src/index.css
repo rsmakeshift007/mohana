@@ -1,0 +1,143 @@
+/* ── MOHANAH Global Styles ─────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary:       #3E4A2C;
+  --primary-dark:  #1E2A10;
+  --primary-light: #5A6A3C;
+  --accent:        #C9956C;
+  --accent-light:  #F2C4A0;
+  --accent-dark:   #8B4A52;
+  --mauve:         #B07A8A;
+  --bg:            #FBF7F2;
+  --surface:       #FFFFFF;
+  --surface-alt:   #F5F0EA;
+  --border:        #EDE5DA;
+  --text:          #1E2A10;
+  --text-sec:      #5A5A5A;
+  --text-muted:    #999999;
+  --success:       #2E7D32;
+  --error:         #C62828;
+  --warning:       #F57F17;
+  --gold:          #D4AF37;
+  --radius-sm:     6px;
+  --radius-md:     12px;
+  --radius-lg:     18px;
+  --radius-xl:     24px;
+  --shadow-sm:     0 2px 8px rgba(0,0,0,0.06);
+  --shadow-md:     0 4px 16px rgba(0,0,0,0.10);
+  --shadow-lg:     0 8px 32px rgba(0,0,0,0.14);
+  --font-serif:    'Playfair Display', Georgia, serif;
+  --font-sans:     'Inter', -apple-system, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { text-decoration: none; color: inherit; }
+button { cursor: pointer; border: none; background: none; font-family: inherit; }
+img { max-width: 100%; display: block; }
+input, select, textarea { font-family: inherit; }
+
+/* ── Scrollbar ─────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+
+/* ── Utilities ─────────────────────────────────────────────────────── */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+.serif { font-family: var(--font-serif); }
+.flex { display: flex; }
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+
+/* ── Buttons ───────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 24px; border-radius: var(--radius-md);
+  font-size: 14px; font-weight: 600; transition: all 0.2s; cursor: pointer;
+}
+.btn-primary { background: var(--primary); color: var(--accent-light); }
+.btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-accent { background: var(--accent); color: white; }
+.btn-accent:hover { background: var(--accent-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
+.btn-outline:hover { background: var(--primary); color: var(--accent-light); }
+.btn-lg { padding: 16px 32px; font-size: 16px; }
+.btn-sm { padding: 8px 16px; font-size: 12px; }
+
+/* ── Cards ─────────────────────────────────────────────────────────── */
+.card { background: var(--surface); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+
+/* ── Badge ─────────────────────────────────────────────────────────── */
+.badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.badge-accent { background: var(--accent); color: white; }
+.badge-green { background: #E8F5E9; color: var(--success); }
+.badge-warning { background: #FFF8E1; color: var(--warning); }
+.badge-error { background: #FFEBEE; color: var(--error); }
+
+/* ── Section Header ────────────────────────────────────────────────── */
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.section-title { font-family: var(--font-serif); font-size: 26px; font-weight: 700; color: var(--text); }
+.section-link { color: var(--accent); font-size: 14px; font-weight: 600; }
+.section-link:hover { text-decoration: underline; }
+
+/* ── Page wrapper ──────────────────────────────────────────────────── */
+.page { padding-top: 80px; min-height: 100vh; }
+
+/* ── Animations ────────────────────────────────────────────────────── */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.4s ease forwards; }
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--border) 25%, var(--surface-alt) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Responsive ────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .grid-4 { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .grid-3 { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .grid-2 { grid-template-columns: 1fr; gap: 12px; }
+  .container { padding: 0 12px; }
+  .section-title { font-size: 20px; }
+  .btn-lg { padding: 12px 22px; font-size: 14px; }
+  /* Checkout: stack on mobile */
+  .checkout-grid { grid-template-columns: 1fr !important; }
+  /* Product detail: stack on mobile */
+  .product-detail-grid { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 480px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .container { padding: 0 10px; }
+}
+@media (max-width: 360px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+}
+
+/* ── Lazy image ─────────────────────────────────────────────────────── */
+img[loading="lazy"] { opacity: 0; transition: opacity 0.3s; }
+img[loading="lazy"].loaded { opacity: 1; }
+
+/* ── Touch targets (min 44px for mobile) ───────────────────────────── */
+@media (max-width: 768px) {
+  .btn { min-height: 44px; }
+  .btn-sm { min-height: 36px; padding: 8px 14px; }
+}

@@ -1,0 +1,209 @@
+<svg viewBox="0 0 700 400" xmlns="http://www.w3.org/2000/svg" style="border-radius:18px;">
+  <defs>
+    <linearGradient id="oliveBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3E4A2C"/>
+      <stop offset="50%" style="stop-color:#4A5A32"/>
+      <stop offset="100%" style="stop-color:#343D24"/>
+    </linearGradient>
+    <linearGradient id="roseGoldText" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#8B4A52"/>
+      <stop offset="25%" style="stop-color:#C9956C"/>
+      <stop offset="50%" style="stop-color:#F2C4A0"/>
+      <stop offset="75%" style="stop-color:#C9956C"/>
+      <stop offset="100%" style="stop-color:#8B4A52"/>
+    </linearGradient>
+    <linearGradient id="copperGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#7A4A2A"/>
+      <stop offset="50%" style="stop-color:#CD8A5A"/>
+      <stop offset="100%" style="stop-color:#7A4A2A"/>
+    </linearGradient>
+    <linearGradient id="creamGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#F5E6D0"/>
+      <stop offset="100%" style="stop-color:#E8D0B0"/>
+    </linearGradient>
+    <linearGradient id="mauveGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#B07A8A"/>
+      <stop offset="100%" style="stop-color:#8A5A6A"/>
+    </linearGradient>
+    <filter id="sketch">
+      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="4" seed="2" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="sketchHeavy">
+      <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" seed="5" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softglow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- BACKGROUND -->
+  <rect width="700" height="400" fill="url(#oliveBg)" rx="18"/>
+
+  <!-- Grain texture dots -->
+  <g opacity="0.06">
+    <circle cx="80" cy="60" r="1" fill="#F5E6D0"/>
+    <circle cx="180" cy="40" r="0.8" fill="#F5E6D0"/>
+    <circle cx="320" cy="30" r="1" fill="#F5E6D0"/>
+    <circle cx="500" cy="55" r="0.8" fill="#F5E6D0"/>
+    <circle cx="620" cy="80" r="1" fill="#F5E6D0"/>
+    <circle cx="650" cy="150" r="0.8" fill="#F5E6D0"/>
+    <circle cx="50" cy="200" r="1" fill="#F5E6D0"/>
+    <circle cx="660" cy="300" r="0.8" fill="#F5E6D0"/>
+    <circle cx="100" cy="350" r="1" fill="#F5E6D0"/>
+    <circle cx="400" cy="380" r="0.8" fill="#F5E6D0"/>
+  </g>
+
+  <!-- HAND-DRAWN ROUGH BORDER -->
+  <path d="M28,24 C150,21 350,19 528,22 C580,23 668,25 672,28 C675,100 674,200 672,300 C671,355 669,372 666,376 C500,379 300,381 140,378 C80,377 28,374 26,371 C23,280 24,150 28,24 Z"
+    fill="none" stroke="#C9956C" stroke-width="1.5" opacity="0.55" filter="url(#sketch)"/>
+  <path d="M36,32 C180,29 380,27 540,30 C590,31 658,33 661,36 C664,110 663,210 661,306 C660,350 658,364 655,368 C490,371 290,372 130,369 C76,368 36,366 34,363 C31,272 32,140 36,32 Z"
+    fill="none" stroke="#C9956C" stroke-width="0.6" opacity="0.3" filter="url(#sketch)"/>
+
+  <!-- CORNER ORNAMENTS -->
+  <!-- Top-left -->
+  <g filter="url(#sketch)" opacity="0.85">
+    <path d="M46,46 C52,38 62,34 68,38 C62,44 52,46 46,46 Z" fill="#7A9A4A" opacity="0.7"/>
+    <path d="M46,46 C40,38 36,30 40,26 C46,32 48,40 46,46 Z" fill="#6A8A3A" opacity="0.6"/>
+    <path d="M46,46 L58,34" stroke="#8BAA5A" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M46,46 L38,30" stroke="#7A9A4A" stroke-width="1.2" stroke-linecap="round"/>
+    <circle cx="46" cy="46" r="2.5" fill="#C9956C" opacity="0.9"/>
+    <path d="M46,56 L46,70" stroke="#C9956C" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+    <path d="M56,46 L72,46" stroke="#C9956C" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+  </g>
+  <!-- Top-right -->
+  <g filter="url(#sketch)" opacity="0.85">
+    <path d="M654,46 C648,38 638,34 632,38 C638,44 648,46 654,46 Z" fill="#7A9A4A" opacity="0.7"/>
+    <path d="M654,46 C660,38 664,30 660,26 C654,32 652,40 654,46 Z" fill="#6A8A3A" opacity="0.6"/>
+    <path d="M654,46 L642,34" stroke="#8BAA5A" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M654,46 L662,30" stroke="#7A9A4A" stroke-width="1.2" stroke-linecap="round"/>
+    <circle cx="654" cy="46" r="2.5" fill="#C9956C" opacity="0.9"/>
+    <path d="M654,56 L654,70" stroke="#C9956C" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+    <path d="M644,46 L628,46" stroke="#C9956C" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+  </g>
+  <!-- Bottom-left -->
+  <g filter="url(#sketch)" opacity="0.85">
+    <path d="M46,354 C52,362 62,366 68,362 C62,356 52,354 46,354 Z" fill="#7A9A4A" opacity="0.7"/>
+    <path d="M46,354 C40,362 36,370 40,374 C46,368 48,360 46,354 Z" fill="#6A8A3A" opacity="0.6"/>
+    <circle cx="46" cy="354" r="2.5" fill="#C9956C" opacity="0.9"/>
+    <path d="M46,344 L46,330" stroke="#C9956C" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+    <path d="M56,354 L72,354" stroke="#C9956C" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+  </g>
+  <!-- Bottom-right -->
+  <g filter="url(#sketch)" opacity="0.85">
+    <path d="M654,354 C648,362 638,366 632,362 C638,356 648,354 654,354 Z" fill="#7A9A4A" opacity="0.7"/>
+    <path d="M654,354 C660,362 664,370 660,374 C654,368 652,360 654,354 Z" fill="#6A8A3A" opacity="0.6"/>
+    <circle cx="654" cy="354" r="2.5" fill="#C9956C" opacity="0.9"/>
+    <path d="M654,344 L654,330" stroke="#C9956C" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+    <path d="M644,354 L628,354" stroke="#C9956C" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+  </g>
+
+  <!-- CENTRAL SAREE MOTIF -->
+  <g transform="translate(350, 118)" filter="url(#softglow)">
+    <g filter="url(#sketchHeavy)" opacity="0.9">
+      <path d="M0,-44 C8,-36 10,-24 6,-16 C2,-8 -2,-8 -6,-16 C-10,-24 -8,-36 0,-44 Z" fill="#B07A8A" opacity="0.8"/>
+      <path d="M31,-31 C28,-20 20,-12 12,-12 C8,-12 8,-16 12,-22 C18,-28 26,-32 31,-31 Z" fill="#C9956C" opacity="0.7"/>
+      <path d="M44,0 C36,8 24,10 16,6 C8,2 8,-2 16,-6 C24,-10 36,-8 44,0 Z" fill="#B07A8A" opacity="0.8"/>
+      <path d="M31,31 C20,28 12,20 12,12 C12,8 16,8 22,12 C28,18 32,26 31,31 Z" fill="#C9956C" opacity="0.7"/>
+      <path d="M0,44 C-8,36 -10,24 -6,16 C-2,8 2,8 6,16 C10,24 8,36 0,44 Z" fill="#B07A8A" opacity="0.8"/>
+      <path d="M-31,31 C-28,20 -20,12 -12,12 C-8,12 -8,16 -12,22 C-18,28 -26,32 -31,31 Z" fill="#C9956C" opacity="0.7"/>
+      <path d="M-44,0 C-36,-8 -24,-10 -16,-6 C-8,-2 -8,2 -16,6 C-24,10 -36,8 -44,0 Z" fill="#B07A8A" opacity="0.8"/>
+      <path d="M-31,-31 C-20,-28 -12,-20 -12,-12 C-12,-8 -16,-8 -22,-12 C-28,-18 -32,-26 -31,-31 Z" fill="#C9956C" opacity="0.7"/>
+    </g>
+    <circle cx="0" cy="0" r="22" fill="#3E4A2C" opacity="0.95"/>
+    <circle cx="0" cy="0" r="22" fill="none" stroke="#F2C4A0" stroke-width="1.2" filter="url(#sketch)"/>
+    <g filter="url(#sketchHeavy)">
+      <path d="M-12,-14 C-6,-18 4,-16 10,-10 C14,-4 12,4 6,8 C0,12 -8,10 -12,4 C-16,-2 -16,-8 -12,-14 Z" fill="#C9956C" opacity="0.85"/>
+      <path d="M-12,-14 C-6,-18 4,-16 10,-10 C14,-4 12,4 6,8 C0,12 -8,10 -12,4 C-16,-2 -16,-8 -12,-14 Z" fill="none" stroke="#F2C4A0" stroke-width="1.2"/>
+      <path d="M-2,-4 C1,-8 6,-6 7,-2 C8,2 5,5 1,5 C-3,5 -5,1 -2,-4 Z" fill="#F5E6D0" opacity="0.8"/>
+      <path d="M6,8 C10,14 10,20 6,24" stroke="#F2C4A0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </g>
+    <circle cx="0" cy="0" r="3.5" fill="#F2C4A0" opacity="0.9" filter="url(#glow)"/>
+  </g>
+
+  <!-- TOP DECORATIVE LINE -->
+  <g filter="url(#sketch)" opacity="0.7">
+    <path d="M100,88 C200,84 290,84 330,86" stroke="#C9956C" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <path d="M370,86 C410,84 500,84 600,88" stroke="#C9956C" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <circle cx="100" cy="88" r="2" fill="#7A9A4A"/>
+    <circle cx="600" cy="88" r="2" fill="#7A9A4A"/>
+    <path d="M150,88 C152,82 156,80 158,84" stroke="#8BAA5A" stroke-width="1" fill="none"/>
+    <path d="M550,88 C548,82 544,80 542,84" stroke="#8BAA5A" stroke-width="1" fill="none"/>
+    <path d="M230,87 C232,81 236,80 237,84" stroke="#8BAA5A" stroke-width="1" fill="none"/>
+    <path d="M470,87 C468,81 464,80 463,84" stroke="#8BAA5A" stroke-width="1" fill="none"/>
+  </g>
+
+  <!-- MOHANAH TEXT -->
+  <text x="354" y="222" font-family="Georgia, 'Times New Roman', serif" font-size="74" font-weight="900" letter-spacing="10" text-anchor="middle" fill="#1E2A10" opacity="0.5">MOHANAH</text>
+  <text x="350" y="218" font-family="Georgia, 'Times New Roman', serif" font-size="74" font-weight="900" letter-spacing="10" text-anchor="middle" fill="url(#roseGoldText)" filter="url(#glow)">MOHANAH</text>
+
+  <!-- Brush underline -->
+  <g filter="url(#sketchHeavy)" opacity="0.8">
+    <path d="M95,230 C200,226 350,224 506,227 C560,228 610,230 610,232 C580,235 400,237 200,235 C150,234 95,234 95,230 Z" fill="#C9956C" opacity="0.25"/>
+    <path d="M110,233 C250,229 420,228 590,231" stroke="#C9956C" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- DIVIDER WITH BOTANICALS -->
+  <g opacity="0.85">
+    <path d="M105,256 C160,252 230,252 300,254" stroke="#8BAA5A" stroke-width="1.3" fill="none" stroke-linecap="round" filter="url(#sketch)"/>
+    <path d="M400,254 C470,252 540,252 595,256" stroke="#8BAA5A" stroke-width="1.3" fill="none" stroke-linecap="round" filter="url(#sketch)"/>
+    <polygon points="350,248 356,254 350,260 344,254" fill="#C9956C" opacity="0.9"/>
+    <polygon points="350,250 354,254 350,258 346,254" fill="#F2C4A0" opacity="0.6"/>
+    <path d="M160,254 C162,249 166,248 166,252" stroke="#7A9A4A" stroke-width="1.2" fill="none" filter="url(#sketch)"/>
+    <path d="M240,253 C242,248 246,247 246,251" stroke="#7A9A4A" stroke-width="1.2" fill="none" filter="url(#sketch)"/>
+    <path d="M540,253 C538,248 534,247 534,251" stroke="#7A9A4A" stroke-width="1.2" fill="none" filter="url(#sketch)"/>
+    <path d="M460,254 C458,249 454,248 454,252" stroke="#7A9A4A" stroke-width="1.2" fill="none" filter="url(#sketch)"/>
+    <circle cx="105" cy="254" r="2.2" fill="#B07A8A" opacity="0.8"/>
+    <circle cx="595" cy="254" r="2.2" fill="#B07A8A" opacity="0.8"/>
+  </g>
+
+  <!-- TAGLINE -->
+  <path d="M160,286 C260,282 440,282 540,285 C480,292 260,293 160,290 Z" fill="#B07A8A" opacity="0.18" filter="url(#sketchHeavy)"/>
+  <text x="350" y="286" font-family="Georgia, 'Times New Roman', serif" font-size="13.5" font-weight="400" letter-spacing="9" text-anchor="middle" fill="#F2C4A0" opacity="0.92" filter="url(#glow)">DRAPE  THE  CHARM</text>
+
+  <!-- Dots flanking tagline -->
+  <g opacity="0.6" filter="url(#sketch)">
+    <circle cx="136" cy="282" r="2" fill="#8BAA5A"/>
+    <circle cx="564" cy="282" r="2" fill="#8BAA5A"/>
+    <circle cx="128" cy="282" r="1.2" fill="#C9956C"/>
+    <circle cx="572" cy="282" r="1.2" fill="#C9956C"/>
+  </g>
+
+  <!-- BOTTOM BOTANICAL STRIP -->
+  <g opacity="0.55" filter="url(#sketch)">
+    <path d="M120,316 C200,310 300,308 350,310 C400,312 500,314 580,318" stroke="#7A9A4A" stroke-width="1" fill="none"/>
+    <path d="M170,314 C172,308 178,306 178,312" fill="#6A8A3A" opacity="0.7"/>
+    <path d="M260,311 C262,305 268,304 268,310" fill="#7A9A4A" opacity="0.7"/>
+    <path d="M350,310 C352,304 356,302 356,308" fill="#6A8A3A" opacity="0.7"/>
+    <path d="M440,312 C442,306 448,305 448,311" fill="#7A9A4A" opacity="0.7"/>
+    <path d="M530,316 C532,310 538,309 538,315" fill="#6A8A3A" opacity="0.7"/>
+    <circle cx="170" cy="313" r="1.8" fill="#C9956C" opacity="0.6"/>
+    <circle cx="350" cy="309" r="1.8" fill="#B07A8A" opacity="0.6"/>
+    <circle cx="530" cy="315" r="1.8" fill="#C9956C" opacity="0.6"/>
+  </g>
+
+  <!-- BRAND STAMP -->
+  <text x="350" y="342" font-family="Georgia, serif" font-size="8.5" letter-spacing="5" text-anchor="middle" fill="#8BAA5A" opacity="0.55">EST. 2024 · INDIA</text>
+
+  <!-- Decorative dot row -->
+  <g opacity="0.35">
+    <circle cx="280" cy="356" r="1" fill="#C9956C"/>
+    <circle cx="296" cy="356" r="1" fill="#B07A8A"/>
+    <circle cx="312" cy="356" r="1.5" fill="#F2C4A0"/>
+    <circle cx="328" cy="356" r="1" fill="#8BAA5A"/>
+    <circle cx="344" cy="356" r="1" fill="#C9956C"/>
+    <circle cx="350" cy="356" r="2" fill="#F2C4A0"/>
+    <circle cx="356" cy="356" r="1" fill="#C9956C"/>
+    <circle cx="372" cy="356" r="1" fill="#8BAA5A"/>
+    <circle cx="388" cy="356" r="1.5" fill="#F2C4A0"/>
+    <circle cx="404" cy="356" r="1" fill="#B07A8A"/>
+    <circle cx="420" cy="356" r="1" fill="#C9956C"/>
+  </g>
+
+</svg>
