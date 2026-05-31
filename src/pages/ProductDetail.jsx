@@ -663,9 +663,8 @@ export default function ProductDetail() {
           .product-detail-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
           .product-image-container {
             aspect-ratio: 4/5;
-            border-radius: 0 !important;
-            width: 100vw !important;
-            margin-left: calc(-1 * var(--container-padding, 16px));
+            border-radius: 12px !important;
+            width: 100% !important;
           }
         }
       `}</style>
