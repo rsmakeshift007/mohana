@@ -157,30 +157,48 @@ export default function ProductDetail() {
           {(() => {
             const allImages = product.images?.length ? product.images : (product.imageUrl ? [{ src: product.imageUrl }] : []);
             const mainImg = allImages[activeImageIdx]?.src || null;
+
+            // Swipe handlers
+            let touchStartX = null;
+            function handleTouchStart(e) { touchStartX = e.touches[0].clientX; }
+            function handleTouchEnd(e) {
+              if (touchStartX === null) return;
+              const diff = touchStartX - e.changedTouches[0].clientX;
+              if (Math.abs(diff) > 40) {
+                if (diff > 0) setActiveImageIdx(i => Math.min(i + 1, allImages.length - 1));
+                else setActiveImageIdx(i => Math.max(i - 1, 0));
+              }
+              touchStartX = null;
+            }
+
             return (
           <div>
-            <div className="product-image-container" style={{
-              borderRadius: 'var(--radius-xl)',
-              background: mainImg ? '#f5f0eb' : `linear-gradient(135deg, ${product.color}DD, ${product.color}55)`,
-              width: '100%',
-              aspectRatio: '3/4',
-              position: 'relative', overflow: 'hidden',
-              boxShadow: 'var(--shadow-lg)',
-            }}>
+            {/* Main image with swipe */}
+            <div
+              className="product-image-container"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              style={{
+                borderRadius: 'var(--radius-xl)',
+                background: '#000',
+                width: '100%',
+                aspectRatio: '3/4',
+                position: 'relative', overflow: 'hidden',
+                boxShadow: 'var(--shadow-lg)',
+                cursor: allImages.length > 1 ? 'grab' : 'default',
+                userSelect: 'none',
+              }}>
               {mainImg ? (
-                <>
-                  <div style={{ position: 'absolute', inset: -20, backgroundImage: `url(${mainImg})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(24px) brightness(0.4)', transform: 'scale(1.08)' }} />
-                  <img src={mainImg} alt={product.name}
-                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block', zIndex: 1 }} />
-                </>
+                <img src={mainImg} alt={product.name}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', zIndex: 1 }} />
               ) : (
                 <>
                   <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 120, opacity: 0.25 }}>🥻</div>
-                  <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 25% 25%, rgba(255,255,255,0.2), transparent 60%)' }} />
+                  <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${product.color}DD, ${product.color}55)` }} />
                 </>
               )}
 
-              {/* Badges — always on top of image */}
+              {/* Badges — always on top */}
               <div style={{ position: 'absolute', top: 14, left: 14, display: 'flex', flexDirection: 'column', gap: 6, zIndex: 10 }}>
                 {product.isNew && <span className="badge badge-accent">NEW ARRIVAL</span>}
                 {product.isTrending && <span className="badge" style={{ background: '#FFF8E1', color: 'var(--warning)' }}>🔥 TRENDING</span>}
@@ -199,30 +217,38 @@ export default function ProductDetail() {
                 }}>
                 {isWishlisted ? '❤️' : '🤍'}
               </button>
+
+              {/* Dot indicators (Myntra style) */}
+              {allImages.length > 1 && (
+                <div style={{
+                  position: 'absolute', bottom: 12, left: 0, right: 0,
+                  display: 'flex', justifyContent: 'center', gap: 6, zIndex: 10,
+                }}>
+                  {allImages.map((_, i) => (
+                    <div key={i} onClick={() => setActiveImageIdx(i)} style={{
+                      width: i === activeImageIdx ? 20 : 7,
+                      height: 7, borderRadius: 4,
+                      background: i === activeImageIdx ? 'white' : 'rgba(255,255,255,0.5)',
+                      transition: 'all 0.25s', cursor: 'pointer',
+                    }} />
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Thumbnail row */}
-            <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+            <div style={{ display: 'flex', gap: 8, marginTop: 10, overflowX: 'auto', paddingBottom: 4 }}>
               {allImages.length > 0 ? allImages.map((img, i) => (
                 <div key={i} onClick={() => setActiveImageIdx(i)} style={{
-                  width: 64, height: 64, borderRadius: 'var(--radius-sm)',
-                  border: i === activeImageIdx ? '2px solid var(--accent)' : '2px solid transparent',
+                  width: 64, height: 80, borderRadius: 'var(--radius-sm)',
+                  border: i === activeImageIdx ? '2.5px solid var(--accent)' : '2px solid transparent',
                   cursor: 'pointer', overflow: 'hidden', flexShrink: 0,
-                  position: 'relative', background: '#f5f0eb',
+                  background: '#000',
                 }}>
-                  <div style={{ position: 'absolute', inset: -4, backgroundImage: `url(${img.src})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(8px) brightness(0.5)' }} />
                   <img src={img.src} alt={`view ${i + 1}`}
-                    style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', zIndex: 1 }} />
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
-              )) : [product.color, `${product.color}88`, `${product.color}55`].map((c, i) => (
-                <div key={i} style={{
-                  width: 64, height: 64, borderRadius: 'var(--radius-sm)',
-                  background: `linear-gradient(135deg, ${c}, ${c}88)`,
-                  border: i === 0 ? '2px solid var(--accent)' : '2px solid transparent',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 24, opacity: 0.7 + i * 0.1,
-                }}>🥻</div>
-              ))}
+              )) : null}
             </div>
           </div>
             );
@@ -576,14 +602,16 @@ export default function ProductDetail() {
         .product-image-container {
           aspect-ratio: 3/4;
           width: 100%;
+          touch-action: pan-y;
         }
         @media (max-width: 768px) {
           .product-grid { grid-template-columns: 1fr !important; }
-          .product-detail-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+          .product-detail-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
           .product-image-container {
             aspect-ratio: 4/5;
-            width: 100%;
-            max-height: 85vw;
+            border-radius: 0 !important;
+            width: 100vw !important;
+            margin-left: calc(-1 * var(--container-padding, 16px));
           }
         }
       `}</style>
