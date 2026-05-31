@@ -189,9 +189,10 @@ export default function ProductDetail() {
                 background: '#000',
                 width: '100%',
                 aspectRatio: '3/4',
+                maxHeight: 'min(520px, calc(100vh - 160px))',
                 position: 'relative', overflow: 'hidden',
                 boxShadow: 'var(--shadow-lg)',
-                cursor: allImages.length > 1 ? 'grab' : 'default',
+                cursor: allImages.length > 1 ? 'pointer' : 'default',
                 userSelect: 'none',
               }}>
               {mainImg ? (
@@ -242,20 +243,40 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* Thumbnail row */}
-            <div style={{ display: 'flex', gap: 8, marginTop: 10, overflowX: 'auto', paddingBottom: 4 }}>
-              {allImages.length > 0 ? allImages.map((img, i) => (
-                <div key={i} onClick={() => setActiveImageIdx(i)} style={{
-                  width: 64, height: 80, borderRadius: 'var(--radius-sm)',
-                  border: i === activeImageIdx ? '2.5px solid var(--accent)' : '2px solid transparent',
-                  cursor: 'pointer', overflow: 'hidden', flexShrink: 0,
-                  background: '#000',
-                }}>
-                  <img src={img.src} alt={`view ${i + 1}`}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            {/* Thumbnail row + desktop arrows */}
+            {allImages.length > 1 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
+                {/* Left arrow */}
+                <button onClick={() => setActiveImageIdx(i => Math.max(i - 1, 0))}
+                  disabled={activeImageIdx === 0}
+                  style={{ width: 32, height: 32, borderRadius: '50%', border: '1.5px solid var(--border)', background: 'var(--surface-alt)', cursor: activeImageIdx === 0 ? 'not-allowed' : 'pointer', fontSize: 14, flexShrink: 0, opacity: activeImageIdx === 0 ? 0.35 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  ‹
+                </button>
+
+                {/* Thumbnails */}
+                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2, flex: 1 }}>
+                  {allImages.map((img, i) => (
+                    <div key={i} onClick={() => setActiveImageIdx(i)} style={{
+                      width: 64, height: 72, borderRadius: 8,
+                      border: i === activeImageIdx ? '2.5px solid var(--accent)' : '2px solid var(--border)',
+                      cursor: 'pointer', overflow: 'hidden', flexShrink: 0,
+                      background: '#f0ebe4',
+                      transition: 'border-color 0.15s',
+                    }}>
+                      <img src={img.src} alt={`view ${i + 1}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                  ))}
                 </div>
-              )) : null}
-            </div>
+
+                {/* Right arrow */}
+                <button onClick={() => setActiveImageIdx(i => Math.min(i + 1, allImages.length - 1))}
+                  disabled={activeImageIdx === allImages.length - 1}
+                  style={{ width: 32, height: 32, borderRadius: '50%', border: '1.5px solid var(--border)', background: 'var(--surface-alt)', cursor: activeImageIdx === allImages.length - 1 ? 'not-allowed' : 'pointer', fontSize: 14, flexShrink: 0, opacity: activeImageIdx === allImages.length - 1 ? 0.35 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  ›
+                </button>
+              </div>
+            )}
           </div>
             );
           })()}
