@@ -22,6 +22,7 @@ export default function ProductDetail() {
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
 
   useEffect(() => {
     if (id) setProductReviews(reviewsDB.getByProduct(id));
@@ -130,8 +131,7 @@ export default function ProductDetail() {
           {/* ── Left: Image ── */}
           {(() => {
             const allImages = product.images?.length ? product.images : (product.imageUrl ? [{ src: product.imageUrl }] : []);
-            const [activeIdx, setActiveIdx] = React.useState(0);
-            const mainImg = allImages[activeIdx]?.src || null;
+            const mainImg = allImages[activeImageIdx]?.src || null;
             return (
           <div>
             <div style={{
@@ -144,9 +144,7 @@ export default function ProductDetail() {
             }}>
               {mainImg ? (
                 <>
-                  {/* Blur backdrop — fills empty space */}
                   <div style={{ position: 'absolute', inset: -20, backgroundImage: `url(${mainImg})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(24px) brightness(0.4)', transform: 'scale(1.08)' }} />
-                  {/* Full image — no crop */}
                   <img src={mainImg} alt={product.name}
                     style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', display: 'block', zIndex: 1 }} />
                 </>
@@ -178,12 +176,12 @@ export default function ProductDetail() {
               </button>
             </div>
 
-            {/* Thumbnail row — show uploaded images or fallback color swatches */}
+            {/* Thumbnail row */}
             <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
               {allImages.length > 0 ? allImages.map((img, i) => (
-                <div key={i} onClick={() => setActiveIdx(i)} style={{
+                <div key={i} onClick={() => setActiveImageIdx(i)} style={{
                   width: 64, height: 64, borderRadius: 'var(--radius-sm)',
-                  border: i === activeIdx ? '2px solid var(--accent)' : '2px solid transparent',
+                  border: i === activeImageIdx ? '2px solid var(--accent)' : '2px solid transparent',
                   cursor: 'pointer', overflow: 'hidden', flexShrink: 0,
                   position: 'relative', background: '#f5f0eb',
                 }}>
