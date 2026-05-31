@@ -1,21 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { settingsDB } from '../services/db';
 
-// ✅ Hardcoded contact info — update here when details change
-const WA_NUMBER = '919334836250';
-const PHONE = '+91 93348 36250';
-const EMAIL = 'hello@mohanah.com';
-const ADDRESS = 'Dhanbad, Jharkhand';
+const DEFAULT_WA      = '919334836250';
+const DEFAULT_PHONE   = '+91 93348 36250';
+const DEFAULT_EMAIL   = 'hello@mohanah.com';
+const DEFAULT_ADDRESS = 'Dhanbad, Jharkhand';
 
 export default function Footer() {
-  const s = settingsDB.get();
-  const waNumber = WA_NUMBER;
-  const email = EMAIL;
-  const phone = PHONE;
-  const address = ADDRESS;
-  const instagram = s.instagram || '';
-  const facebook = s.facebook || '';
+  const local = settingsDB.get();
+  const [cfg, setCfg] = useState({
+    phone:          local.phone          || DEFAULT_PHONE,
+    email:          local.email          || DEFAULT_EMAIL,
+    address:        local.address        || DEFAULT_ADDRESS,
+    whatsappNumber: local.whatsappNumber || DEFAULT_WA,
+    instagram:      local.instagram      || '',
+    facebook:       local.facebook       || '',
+  });
+
+  useEffect(() => {
+    import('../services/supabase').then(({ settingsAPI }) => {
+      ['phone','email','address','whatsappNumber','instagram','facebook'].forEach(k => {
+        settingsAPI.get(k).then(v => { if (v) setCfg(s => ({ ...s, [k]: v })); }).catch(() => {});
+      });
+    });
+  }, []);
+
+  const waNumber  = (cfg.whatsappNumber || DEFAULT_WA).replace(/[\s\+\-]/g, '');
+  const phone     = cfg.phone     || DEFAULT_PHONE;
+  const email     = cfg.email     || DEFAULT_EMAIL;
+  const address   = cfg.address   || DEFAULT_ADDRESS;
+  const instagram = cfg.instagram || '';
+  const facebook  = cfg.facebook  || '';
 
   return (
     <footer style={{

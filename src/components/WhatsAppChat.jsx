@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { settingsDB } from '../services/db';
 
-// ✅ Hardcoded WhatsApp number — change here when number changes
-const WA_NUMBER = '919334836250';
+const DEFAULT_WA = '919334836250';
 
 const QUICK_MESSAGES = [
   {
@@ -42,9 +42,21 @@ export default function WhatsAppChat() {
   const [open, setOpen] = useState(false);
   const { isLoggedIn } = useAuth();
   const navigate = useNavigate();
+  const local = settingsDB.get();
+  const [waNumber, setWaNumber] = useState(
+    (local.whatsappNumber || DEFAULT_WA).replace(/[\s\+\-]/g, '')
+  );
+
+  useEffect(() => {
+    import('../services/supabase').then(({ settingsAPI }) => {
+      settingsAPI.get('whatsappNumber')
+        .then(v => { if (v) setWaNumber(v.replace(/[\s\+\-]/g, '')); })
+        .catch(() => {});
+    });
+  }, []);
 
   function openChat(message) {
-    const url = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(message)}`;
+    const url = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   }
 

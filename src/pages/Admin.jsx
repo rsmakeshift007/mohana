@@ -2221,19 +2221,32 @@ function SettingsSection({ useBackend }) {
   const qrInputRef                = useRef();
 
   useEffect(() => {
-    if (useBackend) {
-      settingsAPI.get()
-        .then(data => setSettings(data))
-        .catch(() => {});
-    }
-  }, [useBackend]);
+    // Load from Supabase (cross-device)
+    supabaseCategoriesAPI.getAll && (() => {})(); // ensure import loaded
+    import('../services/supabase').then(({ settingsAPI: sAPI }) => {
+      const keys = ['storeName','tagline','email','phone','address','gstNumber','instagram','facebook','whatsappNumber','upiId','currency'];
+      Promise.all(keys.map(k => sAPI.get(k).then(v => ({ k, v })).catch(() => ({ k, v: null }))))
+        .then(results => {
+          const fromDB = {};
+          results.forEach(({ k, v }) => { if (v !== null) fromDB[k] = v; });
+          if (Object.keys(fromDB).length > 0) {
+            setSettings(s => ({ ...s, ...fromDB }));
+          }
+        });
+    });
+  }, []);
 
   const inputSt = { width: '100%', padding: '10px 13px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, fontFamily: 'var(--font-sans)', background: 'var(--bg)', outline: 'none', color: 'var(--text)', boxSizing: 'border-box' };
   const labelSt = { fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1, display: 'block', marginBottom: 5 };
 
   async function handleSave() {
     settingsDB.save(settings);
-    if (useBackend) { try { await settingsAPI.save(settings); } catch {} }
+    // Save each key to Supabase (cross-device)
+    try {
+      const { settingsAPI: sAPI } = await import('../services/supabase');
+      const keys = ['storeName','tagline','email','phone','address','gstNumber','instagram','facebook','whatsappNumber','upiId','currency'];
+      await Promise.all(keys.map(k => settings[k] != null ? sAPI.set(k, settings[k]) : Promise.resolve()));
+    } catch (e) { console.warn('Settings Supabase save failed:', e.message); }
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   }
