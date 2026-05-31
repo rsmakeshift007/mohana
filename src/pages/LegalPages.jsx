@@ -67,7 +67,19 @@ function renderContent(text, settings) {
 export default function LegalPage() {
   const { page } = useParams();
   const [pages, setPages] = useState(() => legalDB.getAll());
-  const settings = settingsDB.get();
+  const [settings, setSettings] = useState(settingsDB.get());
+
+  useEffect(() => {
+    // Fetch latest settings from Supabase for cross-device accuracy
+    import('../services/supabase').then(({ settingsAPI }) => {
+      const keys = ['phone', 'email', 'address', 'whatsappNumber', 'storeName', 'freeDeliveryAbove'];
+      keys.forEach(k => {
+        settingsAPI.get(k)
+          .then(v => { if (v) setSettings(s => ({ ...s, [k]: v })); })
+          .catch(() => {});
+      });
+    });
+  }, []);
 
   useEffect(() => {
     function onStorage(e) {
