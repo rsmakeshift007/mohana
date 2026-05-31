@@ -159,11 +159,11 @@ export default function ProductDetail() {
             const mainImg = allImages[activeImageIdx]?.src || null;
             return (
           <div>
-            <div style={{
+            <div className="product-image-container" style={{
               borderRadius: 'var(--radius-xl)',
               background: mainImg ? '#f5f0eb' : `linear-gradient(135deg, ${product.color}DD, ${product.color}55)`,
-              height: 420,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: '100%',
+              aspectRatio: '3/4',
               position: 'relative', overflow: 'hidden',
               boxShadow: 'var(--shadow-lg)',
             }}>
@@ -171,17 +171,17 @@ export default function ProductDetail() {
                 <>
                   <div style={{ position: 'absolute', inset: -20, backgroundImage: `url(${mainImg})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(24px) brightness(0.4)', transform: 'scale(1.08)' }} />
                   <img src={mainImg} alt={product.name}
-                    style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', display: 'block', zIndex: 1 }} />
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block', zIndex: 1 }} />
                 </>
               ) : (
                 <>
-                  <div style={{ fontSize: 120, opacity: 0.25 }}>🥻</div>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 120, opacity: 0.25 }}>🥻</div>
                   <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 25% 25%, rgba(255,255,255,0.2), transparent 60%)' }} />
                 </>
               )}
 
-              {/* Badges */}
-              <div style={{ position: 'absolute', top: 16, left: 16, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {/* Badges — always on top of image */}
+              <div style={{ position: 'absolute', top: 14, left: 14, display: 'flex', flexDirection: 'column', gap: 6, zIndex: 10 }}>
                 {product.isNew && <span className="badge badge-accent">NEW ARRIVAL</span>}
                 {product.isTrending && <span className="badge" style={{ background: '#FFF8E1', color: 'var(--warning)' }}>🔥 TRENDING</span>}
                 {product.discount > 0 && <span className="badge badge-green">{product.discount}% OFF</span>}
@@ -190,7 +190,7 @@ export default function ProductDetail() {
               {/* Wishlist */}
               <button onClick={() => dispatch({ type: 'TOGGLE_WISHLIST', product })}
                 style={{
-                  position: 'absolute', top: 16, right: 16,
+                  position: 'absolute', top: 14, right: 14, zIndex: 10,
                   width: 40, height: 40, borderRadius: '50%',
                   background: 'rgba(255,255,255,0.9)', border: 'none',
                   cursor: 'pointer', fontSize: 18,
@@ -396,18 +396,25 @@ export default function ProductDetail() {
           )}
           {activeTab === 'care' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 500 }}>
-              {[
-                ['🧼', 'Dry clean recommended for silk sarees'],
-                ['💧', 'If hand washing, use cold water with mild detergent'],
-                ['☀️', 'Dry in shade, avoid direct sunlight'],
-                ['🔥', 'Iron on low heat with a cloth between iron and saree'],
-                ['📦', 'Store in muslin cloth, avoid plastic bags'],
-              ].map(([icon, text]) => (
-                <div key={text} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '10px 14px', background: 'var(--surface-alt)', borderRadius: 8 }}>
-                  <span style={{ fontSize: 18 }}>{icon}</span>
-                  <span style={{ fontSize: 13, color: 'var(--text-sec)' }}>{text}</span>
+              {product.careInstructions ? (
+                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '14px 16px', background: 'var(--surface-alt)', borderRadius: 10 }}>
+                  <span style={{ fontSize: 20 }}>🧺</span>
+                  <span style={{ fontSize: 14, color: 'var(--text-sec)', lineHeight: 1.7 }}>{product.careInstructions}</span>
                 </div>
-              ))}
+              ) : (
+                [
+                  ['🧼', 'Dry clean recommended for silk sarees'],
+                  ['💧', 'If hand washing, use cold water with mild detergent'],
+                  ['☀️', 'Dry in shade, avoid direct sunlight'],
+                  ['🔥', 'Iron on low heat with a cloth between iron and saree'],
+                  ['📦', 'Store in muslin cloth, avoid plastic bags'],
+                ].map(([icon, text]) => (
+                  <div key={text} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '10px 14px', background: 'var(--surface-alt)', borderRadius: 8 }}>
+                    <span style={{ fontSize: 18 }}>{icon}</span>
+                    <span style={{ fontSize: 13, color: 'var(--text-sec)' }}>{text}</span>
+                  </div>
+                ))
+              )}
             </div>
           )}
         </div>
@@ -566,9 +573,18 @@ export default function ProductDetail() {
       </div>
 
       <style>{`
+        .product-image-container {
+          aspect-ratio: 3/4;
+          width: 100%;
+        }
         @media (max-width: 768px) {
           .product-grid { grid-template-columns: 1fr !important; }
           .product-detail-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+          .product-image-container {
+            aspect-ratio: 4/5;
+            width: 100%;
+            max-height: 85vw;
+          }
         }
       `}</style>
     </div>
