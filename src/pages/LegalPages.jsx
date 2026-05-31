@@ -70,12 +70,26 @@ export default function LegalPage() {
   const [settings, setSettings] = useState(settingsDB.get());
 
   useEffect(() => {
-    // Fetch latest settings from Supabase for cross-device accuracy
     import('../services/supabase').then(({ settingsAPI }) => {
-      const keys = ['phone', 'email', 'address', 'whatsappNumber', 'storeName', 'freeDeliveryAbove'];
-      keys.forEach(k => {
+      // Load settings
+      const settingKeys = ['phone', 'email', 'address', 'whatsappNumber', 'storeName', 'freeDeliveryAbove'];
+      settingKeys.forEach(k => {
         settingsAPI.get(k)
           .then(v => { if (v) setSettings(s => ({ ...s, [k]: v })); })
+          .catch(() => {});
+      });
+      // Load legal page content from Supabase
+      const legalKeys = ['privacy', 'terms', 'refund', 'shipping', 'contact'];
+      legalKeys.forEach(k => {
+        settingsAPI.get(`legal_${k}`)
+          .then(val => {
+            if (val) {
+              try {
+                const parsed = JSON.parse(val);
+                setPages(p => ({ ...p, [k]: { ...p[k], ...parsed } }));
+              } catch {}
+            }
+          })
           .catch(() => {});
       });
     });

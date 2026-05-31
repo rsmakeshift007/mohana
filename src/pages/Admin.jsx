@@ -1620,20 +1620,50 @@ function LegalSection() {
   const [saved,       setSaved]       = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
 
+  // Load legal pages from Supabase on mount (cross-device)
+  useEffect(() => {
+    import('../services/supabase').then(({ settingsAPI: sAPI }) => {
+      const keys = ['privacy', 'terms', 'refund', 'shipping', 'contact'];
+      keys.forEach(k => {
+        sAPI.get(`legal_${k}`)
+          .then(val => {
+            if (val) {
+              try {
+                const parsed = JSON.parse(val);
+                setPages(p => ({ ...p, [k]: { ...p[k], ...parsed } }));
+              } catch {}
+            }
+          })
+          .catch(() => {});
+      });
+    });
+  }, []);
+
   const current = pages[activeKey] || {};
 
   function handleChange(field, value) {
     setPages(p => ({ ...p, [activeKey]: { ...p[activeKey], [field]: value } }));
   }
 
-  function handleSave() {
+  async function handleSave() {
     legalDB.savePage(activeKey, pages[activeKey]);
+    // Also save to Supabase
+    try {
+      const { settingsAPI: sAPI } = await import('../services/supabase');
+      await sAPI.set(`legal_${activeKey}`, JSON.stringify(pages[activeKey]));
+    } catch (e) { console.warn('Legal save to Supabase failed:', e.message); }
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   }
 
-  function handleSaveAll() {
+  async function handleSaveAll() {
     legalDB.saveAll(pages);
+    // Save all to Supabase
+    try {
+      const { settingsAPI: sAPI } = await import('../services/supabase');
+      const keys = ['privacy', 'terms', 'refund', 'shipping', 'contact'];
+      await Promise.all(keys.map(k => sAPI.set(`legal_${k}`, JSON.stringify(pages[k]))));
+    } catch (e) { console.warn('Legal saveAll to Supabase failed:', e.message); }
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   }
