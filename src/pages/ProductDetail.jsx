@@ -21,6 +21,7 @@ export default function ProductDetail() {
   const [reviewText, setReviewText] = useState('');
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState([]);
 
   useEffect(() => {
     if (id) setProductReviews(reviewsDB.getByProduct(id));
@@ -46,7 +47,22 @@ export default function ProductDetail() {
   useEffect(() => {
     if (!product) setLoadingProduct(true);
     productsAPI.getById(id)
-      .then(data => { if (data) setProduct(normalizeProduct(data)); })
+      .then(data => {
+        if (data) {
+          const norm = normalizeProduct(data);
+          setProduct(norm);
+          // Load related products from Supabase
+          productsAPI.getAll()
+            .then(all => {
+              const rel = all
+                .filter(p => p.fabric === data.fabric && p.id !== data.id)
+                .slice(0, 4)
+                .map(normalizeProduct);
+              setRelatedProducts(rel);
+            })
+            .catch(() => {});
+        }
+      })
       .catch(() => {
         const local = productsDB.getAll().find(p => p.id === id);
         if (local) setProduct(normalizeProduct(local));
@@ -80,7 +96,7 @@ export default function ProductDetail() {
 
   const isWishlisted = wishlist.find(i => i.id === product.id);
   const inCart = items.find(i => i.id === product.id);
-  const related = products.filter(p => p.fabric === product.fabric && p.id !== product.id).slice(0, 4);
+  const related = relatedProducts;
 
   function handleAddToCart() {
     for (let i = 0; i < qty; i++) {
@@ -109,7 +125,7 @@ export default function ProductDetail() {
         </div>
 
         {/* Main Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, alignItems: 'start' }}>
+        <div className="product-detail-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, alignItems: 'start' }}>
 
           {/* ── Left: Image ── */}
           {(() => {
@@ -529,6 +545,7 @@ export default function ProductDetail() {
       <style>{`
         @media (max-width: 768px) {
           .product-grid { grid-template-columns: 1fr !important; }
+          .product-detail-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
         }
       `}</style>
     </div>
