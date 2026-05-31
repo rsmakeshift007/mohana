@@ -152,7 +152,7 @@ const FALLBACK_REVIEWS = [
 export default function Home() {
   const navigate = useNavigate();
   const [homeReviews, setHomeReviews] = useState([]);
-  const [allProducts, setAllProducts] = useState(() => productsDB.getAll());
+  const [allProducts, setAllProducts] = useState([]);
 
   useEffect(() => {
     const real = reviewsDB.getRecent(6).filter(r => r.productId !== '__app__');
@@ -175,8 +175,8 @@ export default function Home() {
 
   useEffect(() => {
     productsAPI.getAll()
-      .then(data => { if (data && data.length > 0) setAllProducts(data.map(normalizeProduct)); })
-      .catch(() => setAllProducts(productsDB.getAll()));
+      .then(data => { setAllProducts((data || []).map(normalizeProduct)); })
+      .catch(() => setAllProducts([]));
   }, []);
 
   const occasions = [

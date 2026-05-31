@@ -111,7 +111,7 @@ export default function Catalog() {
   const filterType = searchParams.get('filter') || '';
 
   // ── Products: load from Supabase, fallback to localStorage ──
-  const [products, setProducts] = useState(() => productsDB.getAll());
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [occasions, setOccasions] = useState(() => ['All', ...categoriesDB.getOccasions()]);
   const [fabrics,   setFabrics]   = useState(() => ['All', ...categoriesDB.getFabrics()]);
@@ -145,10 +145,9 @@ export default function Catalog() {
     setLoading(true);
     productsAPI.getAll()
       .then(data => {
-        if (data && data.length > 0) setProducts(data.map(normalizeProduct));
-        else setProducts(productsDB.getAll());
+        setProducts((data || []).map(normalizeProduct));
       })
-      .catch(() => setProducts(productsDB.getAll()))
+      .catch(() => setProducts([]))
       .finally(() => setLoading(false));
   }, []);
 
