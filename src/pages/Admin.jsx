@@ -199,6 +199,7 @@ function ProductForm({ onSave, onCancel, editProduct }) {
       name: '', fabric: 'Pure Silk', price: '', originalPrice: '',
       region: '', color: '#8B1A1A', description: '', inStock: true,
       vendorId: '', vendorName: '',
+      length: '5.5 Metres', blousePiece: 'Included (0.8m)', careInstructions: 'Dry Clean Only',
     };
     // Normalize occasions → always an array
     let occ = base.occasions || (base.occasion ? [base.occasion] : ['Wedding']);
@@ -394,9 +395,9 @@ function ProductForm({ onSave, onCancel, editProduct }) {
           {/* Region + Color */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'end' }}>
             <div>
-              <label style={labelSt}>ORIGIN / REGION *</label>
+              <label style={labelSt}>ORIGIN / REGION <span style={{ fontWeight: 400, textTransform: 'none', fontSize: 10, color: 'var(--text-muted)' }}>(optional)</span></label>
               <input value={form.region} onChange={e => setForm(f => ({ ...f, region: e.target.value }))}
-                placeholder="e.g. Varanasi, Kanchipuram" style={inputSt}
+                placeholder="e.g. Varanasi, Kanchipuram (leave blank to hide)" style={inputSt}
                 onFocus={e => e.target.style.borderColor = 'var(--accent)'}
                 onBlur={e => e.target.style.borderColor = 'var(--border)'} />
             </div>
@@ -419,6 +420,48 @@ function ProductForm({ onSave, onCancel, editProduct }) {
               style={{ ...inputSt, resize: 'vertical', lineHeight: 1.6 }}
               onFocus={e => e.target.style.borderColor = 'var(--accent)'}
               onBlur={e => e.target.style.borderColor = 'var(--border)'} />
+          </div>
+
+          {/* Length + Blouse Piece */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={labelSt}>SAREE LENGTH <span style={{ fontWeight: 400, textTransform: 'none', fontSize: 10, color: 'var(--text-muted)' }}>(optional)</span></label>
+              <input value={form.length || ''} onChange={e => setForm(f => ({ ...f, length: e.target.value }))}
+                placeholder="e.g. 5.5 Metres, 6 Metres" style={inputSt}
+                onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                onBlur={e => e.target.style.borderColor = 'var(--border)'} />
+            </div>
+            <div>
+              <label style={labelSt}>BLOUSE PIECE <span style={{ fontWeight: 400, textTransform: 'none', fontSize: 10, color: 'var(--text-muted)' }}>(optional)</span></label>
+              <select value={form.blousePiece || ''} onChange={e => setForm(f => ({ ...f, blousePiece: e.target.value }))}
+                style={{ ...inputSt, cursor: 'pointer' }}
+                onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                onBlur={e => e.target.style.borderColor = 'var(--border)'}>
+                <option value="">— Hide this field —</option>
+                <option value="Included (0.8m)">Included (0.8m)</option>
+                <option value="Included (1m)">Included (1m)</option>
+                <option value="Not Included">Not Included</option>
+                <option value="Custom">Custom (type below)</option>
+              </select>
+              {form.blousePiece === 'Custom' && (
+                <input value={form.blousePieceCustom || ''} onChange={e => setForm(f => ({ ...f, blousePieceCustom: e.target.value }))}
+                  placeholder="e.g. Included (1.2m)" style={{ ...inputSt, marginTop: 6 }}
+                  onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                  onBlur={e => e.target.style.borderColor = 'var(--border)'} />
+              )}
+            </div>
+          </div>
+
+          {/* Care Instructions */}
+          <div>
+            <label style={labelSt}>CARE INSTRUCTIONS <span style={{ fontWeight: 400, textTransform: 'none', fontSize: 10, color: 'var(--text-muted)' }}>(optional)</span></label>
+            <textarea value={form.careInstructions || ''} onChange={e => setForm(f => ({ ...f, careInstructions: e.target.value }))}
+              placeholder="e.g. Dry clean only. Store in muslin cloth. Avoid direct sunlight."
+              rows={2}
+              style={{ ...inputSt, resize: 'vertical', lineHeight: 1.6 }}
+              onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+              onBlur={e => e.target.style.borderColor = 'var(--border)'} />
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>Leave blank to use default care tips</div>
           </div>
 
           {/* Vendor / Supplier (admin-only) */}
@@ -2224,7 +2267,7 @@ function SettingsSection({ useBackend }) {
     // Load from Supabase (cross-device)
     supabaseCategoriesAPI.getAll && (() => {})(); // ensure import loaded
     import('../services/supabase').then(({ settingsAPI: sAPI }) => {
-      const keys = ['storeName','tagline','email','phone','address','gstNumber','instagram','facebook','whatsappNumber','upiId','currency'];
+      const keys = ['storeName','tagline','email','phone','address','gstNumber','instagram','facebook','whatsappNumber','upiId','currency','deliveryLine1','deliveryLine2','deliveryLine3'];
       Promise.all(keys.map(k => sAPI.get(k).then(v => ({ k, v })).catch(() => ({ k, v: null }))))
         .then(results => {
           const fromDB = {};
@@ -2244,7 +2287,7 @@ function SettingsSection({ useBackend }) {
     // Save each key to Supabase (cross-device)
     try {
       const { settingsAPI: sAPI } = await import('../services/supabase');
-      const keys = ['storeName','tagline','email','phone','address','gstNumber','instagram','facebook','whatsappNumber','upiId','currency'];
+      const keys = ['storeName','tagline','email','phone','address','gstNumber','instagram','facebook','whatsappNumber','upiId','currency','deliveryLine1','deliveryLine2','deliveryLine3'];
       await Promise.all(keys.map(k => settings[k] != null ? sAPI.set(k, settings[k]) : Promise.resolve()));
     } catch (e) { console.warn('Settings Supabase save failed:', e.message); }
     setSaved(true);
@@ -2402,6 +2445,30 @@ function SettingsSection({ useBackend }) {
               ))}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ── Delivery Info (shown on every product page) ── */}
+      <div className="card" style={{ padding: 24, marginTop: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 16, marginBottom: 4 }}>🚚 Product Page — Delivery Info</div>
+        <p style={{ fontSize: 12, color: 'var(--text-sec)', marginTop: -8 }}>Yeh teeno lines har product detail page par dikhti hain. Edit karo ya blank chhodo to hide karo.</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {[
+            ['DELIVERY LINE', 'deliveryLine1', '🚚', 'Free delivery on orders above ₹2,000'],
+            ['RETURNS LINE', 'deliveryLine2', '🔄', '7-day easy returns & exchange'],
+            ['QUALITY LINE', 'deliveryLine3', '🔒', '100% authentic, quality guaranteed'],
+          ].map(([label, key, icon, placeholder]) => (
+            <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 20, flexShrink: 0 }}>{icon}</span>
+              <div style={{ flex: 1 }}>
+                <label style={labelSt}>{label}</label>
+                <input value={settings[key] || ''} onChange={e => setSettings(s => ({ ...s, [key]: e.target.value }))}
+                  placeholder={placeholder} style={inputSt}
+                  onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                  onBlur={e => e.target.style.borderColor = 'var(--border)'} />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -2876,14 +2943,17 @@ export default function Admin() {
   function normalizeAdminProduct(p) {
     return {
       ...p,
-      imageUrl:      p.imageUrl      || p.image_url      || '',
-      originalPrice: p.originalPrice ?? p.original_price ?? null,
-      inStock:       p.inStock       ?? p.in_stock       ?? p.stock ?? true,
-      isNew:         p.isNew         ?? p.is_new         ?? false,
-      isTrending:    p.isTrending    ?? p.is_trending    ?? false,
-      occasions:     Array.isArray(p.occasions) && p.occasions.length ? p.occasions : (p.occasion ? [p.occasion] : []),
-      images:        Array.isArray(p.images) ? p.images : (p.image_url ? [{ src: p.image_url }] : []),
-      color:         p.color || '#8B1A1A',
+      imageUrl:          p.imageUrl          || p.image_url          || '',
+      originalPrice:     p.originalPrice     ?? p.original_price     ?? null,
+      inStock:           p.inStock           ?? p.in_stock           ?? p.stock ?? true,
+      isNew:             p.isNew             ?? p.is_new             ?? false,
+      isTrending:        p.isTrending        ?? p.is_trending        ?? false,
+      occasions:         Array.isArray(p.occasions) && p.occasions.length ? p.occasions : (p.occasion ? [p.occasion] : []),
+      images:            Array.isArray(p.images) ? p.images : (p.image_url ? [{ src: p.image_url }] : []),
+      color:             p.color             || '#8B1A1A',
+      length:            p.length            || '',
+      blousePiece:       p.blousePiece       || p.blouse_piece       || '',
+      careInstructions:  p.careInstructions  || p.care_instructions  || '',
     };
   }
 
@@ -2930,8 +3000,11 @@ export default function Admin() {
         is_trending:   product.isTrending || false,
         rating:        product.rating || 4.5,
         reviews:       product.reviews || 0,
-        vendor_id:     null,  // skip vendor_id to avoid UUID type error
-        vendor_name:   product.vendorName || '',
+        vendor_id:          null,
+        vendor_name:        product.vendorName || '',
+        length:             product.length || '',
+        blouse_piece:       product.blousePiece === 'Custom' ? (product.blousePieceCustom || '') : (product.blousePiece || ''),
+        care_instructions:  product.careInstructions || '',
       };
       if (editProduct && editProduct._supabase_id) {
         // Update existing Supabase row using its real UUID

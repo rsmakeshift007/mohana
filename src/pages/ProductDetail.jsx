@@ -23,10 +23,32 @@ export default function ProductDetail() {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const [deliveryInfo, setDeliveryInfo] = useState({
+    line1: 'Free delivery on orders above ₹2,000',
+    line2: '7-day easy returns & exchange',
+    line3: '100% authentic, quality guaranteed',
+  });
 
   useEffect(() => {
     if (id) setProductReviews(reviewsDB.getByProduct(id));
   }, [id]);
+
+  // Load delivery info from Supabase settings
+  useEffect(() => {
+    import('../services/supabase').then(({ settingsAPI }) => {
+      Promise.all([
+        settingsAPI.get('deliveryLine1').catch(() => null),
+        settingsAPI.get('deliveryLine2').catch(() => null),
+        settingsAPI.get('deliveryLine3').catch(() => null),
+      ]).then(([l1, l2, l3]) => {
+        setDeliveryInfo({
+          line1: l1 || 'Free delivery on orders above ₹2,000',
+          line2: l2 || '7-day easy returns & exchange',
+          line3: l3 || '100% authentic, quality guaranteed',
+        });
+      });
+    });
+  }, []);
 
   function normalizeProduct(p) {
     if (!p) return null;
@@ -39,9 +61,12 @@ export default function ProductDetail() {
       isTrending:    p.isTrending    ?? p.is_trending    ?? false,
       occasions:     Array.isArray(p.occasions) && p.occasions.length ? p.occasions : (p.occasion ? [p.occasion] : []),
       images:        Array.isArray(p.images) ? p.images : (p.imageUrl || p.image_url ? [{ src: p.imageUrl || p.image_url }] : []),
-      color:         p.color || '#8B1A1A',
-      rating:        p.rating || 4.5,
-      reviews:       p.reviews || 0,
+      color:             p.color             || '#8B1A1A',
+      rating:            p.rating            || 4.5,
+      reviews:           p.reviews           || 0,
+      length:            p.length            || '',
+      blousePiece:       p.blousePiece       || p.blouse_piece       || '',
+      careInstructions:  p.careInstructions  || p.care_instructions  || '',
     };
   }
 
@@ -257,10 +282,10 @@ export default function ProductDetail() {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
               {[
                 { icon: '🧵', label: product.fabric },
-                { icon: '📍', label: product.region },
+                product.region ? { icon: '📍', label: product.region } : null,
                 { icon: '🎭', label: (Array.isArray(product.occasions) && product.occasions.length ? product.occasions : [product.occasion]).join(', ') },
-                { icon: '📏', label: '5.5 Metres' },
-              ].map(chip => (
+                product.length ? { icon: '📏', label: product.length } : null,
+              ].filter(Boolean).map(chip => (
                 <span key={chip.label} style={{
                   padding: '5px 12px', borderRadius: 20,
                   background: 'var(--surface-alt)', border: '1px solid var(--border)',
@@ -311,16 +336,16 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* Delivery info */}
+            {/* Delivery info — from Admin Settings */}
             <div style={{
               background: 'var(--surface-alt)', borderRadius: 'var(--radius-md)',
               padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8,
             }}>
               {[
-                { icon: '🚚', text: 'Free delivery on orders above ₹2,000' },
-                { icon: '🔄', text: '7-day easy returns & exchange' },
-                { icon: '🔒', text: '100% authentic, quality guaranteed' },
-              ].map(item => (
+                { icon: '🚚', text: deliveryInfo.line1 },
+                { icon: '🔄', text: deliveryInfo.line2 },
+                { icon: '🔒', text: deliveryInfo.line3 },
+              ].filter(i => i.text).map(item => (
                 <div key={item.text} style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 12, color: 'var(--text-sec)' }}>
                   <span>{item.icon}</span><span>{item.text}</span>
                 </div>
@@ -356,12 +381,12 @@ export default function ProductDetail() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, maxWidth: 600 }}>
               {[
                 ['Fabric', product.fabric],
-                ['Origin', product.region],
+                product.region ? ['Origin', product.region] : null,
                 ['Occasion', (Array.isArray(product.occasions) && product.occasions.length ? product.occasions : [product.occasion]).join(', ')],
-                ['Length', '5.5 Metres'],
-                ['Blouse Piece', 'Included (0.8m)'],
-                ['Care', 'Dry Clean Only'],
-              ].map(([key, val]) => (
+                product.length ? ['Length', product.length] : null,
+                product.blousePiece ? ['Blouse Piece', product.blousePiece] : null,
+                product.careInstructions ? ['Care', product.careInstructions] : null,
+              ].filter(Boolean).map(([key, val]) => (
                 <div key={key} style={{ background: 'var(--surface-alt)', borderRadius: 8, padding: '10px 14px' }}>
                   <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 700, letterSpacing: 1, marginBottom: 3 }}>{key.toUpperCase()}</div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{val}</div>
