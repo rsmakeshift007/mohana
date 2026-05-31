@@ -3003,59 +3003,59 @@ export default function Admin() {
   }
 
   async function handleSaveProduct(product) {
-    // Always save to localStorage first (instant)
-    if (editProduct) productsDB.update(product.id, product);
-    else productsDB.add(product);
+    const supabaseProduct = {
+      name:             product.name,
+      fabric:           product.fabric,
+      occasion:         product.occasion || (product.occasions?.[0] ?? 'Wedding'),
+      occasions:        product.occasions || [product.occasion || 'Wedding'],
+      price:            product.price,
+      original_price:   product.originalPrice || null,
+      discount:         product.discount || 0,
+      image_url:        product.imageUrl || '',
+      images:           product.images || [],
+      reels:            product.reels || [],
+      color:            product.color || '#8B1A1A',
+      region:           product.region || '',
+      description:      product.description || '',
+      stock:            product.inStock !== false,
+      in_stock:         product.inStock !== false,
+      is_new:           product.isNew || false,
+      is_trending:      product.isTrending || false,
+      rating:           product.rating || 4.5,
+      reviews:          product.reviews || 0,
+      vendor_id:        null,
+      vendor_name:      product.vendorName || '',
+      length:           product.length || '',
+      blouse_piece:     product.blousePiece === 'Custom' ? (product.blousePieceCustom || '') : (product.blousePiece || ''),
+      care_instructions: product.careInstructions || '',
+    };
 
-    // Save to Supabase (cross-device)
     try {
-      // Build clean object — do NOT send id for new products (Supabase auto-generates UUID)
-      const supabaseProduct = {
-        name:          product.name,
-        fabric:        product.fabric,
-        occasion:      product.occasion || (product.occasions?.[0] ?? 'Wedding'),
-        occasions:     product.occasions || [product.occasion || 'Wedding'],
-        price:         product.price,
-        original_price: product.originalPrice || null,
-        discount:      product.discount || 0,
-        image_url:     product.imageUrl || '',
-        images:        product.images || [],
-        reels:         product.reels || [],
-        color:         product.color || '#8B1A1A',
-        region:        product.region || '',
-        description:   product.description || '',
-        stock:         product.inStock !== false,
-        in_stock:      product.inStock !== false,
-        is_new:        product.isNew || false,
-        is_trending:   product.isTrending || false,
-        rating:        product.rating || 4.5,
-        reviews:       product.reviews || 0,
-        vendor_id:          null,
-        vendor_name:        product.vendorName || '',
-        length:             product.length || '',
-        blouse_piece:       product.blousePiece === 'Custom' ? (product.blousePieceCustom || '') : (product.blousePiece || ''),
-        care_instructions:  product.careInstructions || '',
-      };
-      if (editProduct && editProduct._supabase_id) {
-        // Update existing Supabase row using its real UUID
-        await supabaseProductsAPI.update(editProduct._supabase_id, supabaseProduct);
-      } else if (!editProduct) {
-        // Insert new row — get back the Supabase UUID and save it
+      if (editProduct) {
+        // UPDATE
+        const targetId = editProduct._supabase_id || editProduct.id;
+        const updated = await supabaseProductsAPI.update(targetId, supabaseProduct);
+        // Immediately update productList state — no wait needed
+        setProductList(prev => prev.map(p => p.id === targetId ? normalizeAdminProduct({ ...updated }) : p));
+      } else {
+        // INSERT — get back UUID
         const saved = await supabaseProductsAPI.add(supabaseProduct);
         if (saved?.id) {
-          // Store Supabase UUID in localStorage product for future edits
-          productsDB.update(product.id, { ...product, _supabase_id: saved.id });
+          // Immediately add to top of list — no race condition
+          setProductList(prev => [normalizeAdminProduct(saved), ...prev]);
+          productsDB.add({ ...product, _supabase_id: saved.id });
         }
       }
     } catch (err) {
-      console.warn('Supabase save failed (localStorage used):', err.message);
-      alert('⚠️ Supabase error: ' + err.message);
+      console.error('Supabase save error:', err.message);
+      alert('❌ Save failed: ' + err.message);
+      return;
     }
 
-    await refreshProducts();
     setEditProduct(null);
     setActiveSection('inventory');
-    alert(`✓ "${product.name}" ${editProduct ? 'updated' : 'added'}!`);
+    // Sync full list from Supabase in background (no blocking)
+    setTimeout(() => refreshProducts(), 800);
   }
 
   function handleEdit(product) {
