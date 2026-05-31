@@ -132,7 +132,7 @@ export default function Catalog() {
       ...p,
       imageUrl:      p.imageUrl      || p.image_url      || '',
       originalPrice: p.originalPrice ?? p.original_price ?? null,
-      inStock:       p.inStock       ?? p.in_stock       ?? true,
+      inStock:       p.inStock       ?? p.in_stock       ?? p.stock ?? true,
       isNew:         p.isNew         ?? p.is_new         ?? false,
       isTrending:    p.isTrending    ?? p.is_trending    ?? false,
       occasions:     Array.isArray(p.occasions) && p.occasions.length ? p.occasions : (p.occasion ? [p.occasion] : []),

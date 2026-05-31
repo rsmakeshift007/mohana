@@ -2897,6 +2897,7 @@ export default function Admin() {
         color:         product.color || '#8B1A1A',
         region:        product.region || '',
         description:   product.description || '',
+        stock:         product.inStock !== false,
         in_stock:      product.inStock !== false,
         is_new:        product.isNew || false,
         is_trending:   product.isTrending || false,
