@@ -28,22 +28,17 @@ function ProductCard({ product }) {
           const imgSrc = product.images?.[0]?.src || product.imageUrl || null;
           return (
             <div style={{
-              height: 180,
-              background: imgSrc ? '#f5f0eb' : `linear-gradient(135deg, ${product.color}CC, ${product.color}44)`,
-              position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              aspectRatio: '3/4',
+              background: imgSrc ? '#f0ebe4' : `linear-gradient(135deg, ${product.color}CC, ${product.color}44)`,
+              position: 'relative',
               borderRadius: 'var(--radius-md) var(--radius-md) 0 0', overflow: 'hidden',
             }}>
               {imgSrc ? (
-                <>
-                  {/* Blur backdrop */}
-                  <div style={{ position: 'absolute', inset: -10, backgroundImage: `url(${imgSrc})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(16px) brightness(0.45)', transform: 'scale(1.08)' }} />
-                  {/* Full image */}
-                  <img src={imgSrc} alt={product.name} loading="lazy"
-                    style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', display: 'block', zIndex: 1 }} />
-                </>
+                <img src={imgSrc} alt={product.name} loading="lazy"
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               ) : (
                 <>
-                  <div style={{ fontSize: 56, opacity: 0.3 }}>🥻</div>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 56, opacity: 0.3 }}>🥻</div>
                   <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), transparent)' }} />
                 </>
               )}
