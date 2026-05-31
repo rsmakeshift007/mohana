@@ -2873,12 +2873,26 @@ export default function Admin() {
     });
   }, []);
 
+  function normalizeAdminProduct(p) {
+    return {
+      ...p,
+      imageUrl:      p.imageUrl      || p.image_url      || '',
+      originalPrice: p.originalPrice ?? p.original_price ?? null,
+      inStock:       p.inStock       ?? p.in_stock       ?? p.stock ?? true,
+      isNew:         p.isNew         ?? p.is_new         ?? false,
+      isTrending:    p.isTrending    ?? p.is_trending    ?? false,
+      occasions:     Array.isArray(p.occasions) && p.occasions.length ? p.occasions : (p.occasion ? [p.occasion] : []),
+      images:        Array.isArray(p.images) ? p.images : (p.image_url ? [{ src: p.image_url }] : []),
+      color:         p.color || '#8B1A1A',
+    };
+  }
+
   async function refreshProducts() {
     // Try Supabase first
     try {
       const data = await supabaseProductsAPI.getAll();
       if (data && data.length > 0) {
-        setProductList(data);
+        setProductList(data.map(normalizeAdminProduct));
         setStats(getDBStats());
         return;
       }
@@ -2959,19 +2973,15 @@ export default function Admin() {
   }
 
   async function handleToggleStock(id) {
-    // Toggle in Supabase
-    const local = productsDB.getAll().find(p => p.id === id);
-    const newStock = !(local?.inStock !== false);
+    // Get current stock from productList (Supabase normalized data)
+    const current = productList.find(p => p.id === id);
+    const newStock = !(current?.inStock !== false);
     try {
+      // id is Supabase UUID directly
       await supabaseProductsAPI.update(id, { stock: newStock, in_stock: newStock });
-    } catch {}
-    if (local?._supabase_id) {
-      try { await supabaseProductsAPI.update(local._supabase_id, { stock: newStock, in_stock: newStock }); } catch {}
+    } catch (err) {
+      console.warn('Toggle stock error:', err.message);
     }
-    if (useBackend) {
-      try { await productsAPI.toggleStock(id); } catch {}
-    }
-    productsDB.toggleStock(id);
     await refreshProducts();
   }
 
