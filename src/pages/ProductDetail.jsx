@@ -23,6 +23,8 @@ export default function ProductDetail() {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
+  // -1 = main product, 0..n = colorVariants index
+  const [activeVariantIdx, setActiveVariantIdx] = useState(-1);
   const [deliveryInfo, setDeliveryInfo] = useState({
     line1: 'Free delivery on orders above ₹2,000',
     line2: '7-day easy returns & exchange',
@@ -67,6 +69,7 @@ export default function ProductDetail() {
       length:            p.length            || '',
       blousePiece:       p.blousePiece       || p.blouse_piece       || '',
       careInstructions:  p.careInstructions  || p.care_instructions  || '',
+      colorVariants:     Array.isArray(p.colorVariants) ? p.colorVariants : (Array.isArray(p.color_variants) ? p.color_variants : []),
     };
   }
 
@@ -155,7 +158,10 @@ export default function ProductDetail() {
 
           {/* ── Left: Image ── */}
           {(() => {
-            const allImages = product.images?.length ? product.images : (product.imageUrl ? [{ src: product.imageUrl }] : []);
+            const activeVariant = activeVariantIdx >= 0 ? product.colorVariants?.[activeVariantIdx] : null;
+            const allImages = activeVariant?.images?.length
+              ? activeVariant.images
+              : (product.images?.length ? product.images : (product.imageUrl ? [{ src: product.imageUrl }] : []));
             const mainImg = allImages[activeImageIdx]?.src || null;
 
             // Swipe handlers
@@ -257,13 +263,61 @@ export default function ProductDetail() {
           {/* ── Right: Details ── */}
           <div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: 1, marginBottom: 6 }}>
-              {product.fabric} · {product.region}
+              {product.fabric}{product.region ? ` · ${product.region}` : ''}
             </div>
 
             <h1 style={{
               fontFamily: 'var(--font-serif)', fontSize: 26, fontWeight: 900,
               color: 'var(--text)', lineHeight: 1.2, marginBottom: 12,
             }}>{product.name}</h1>
+
+            {/* ── Color Variants (Myntra style) ── */}
+            {product.colorVariants?.length > 0 && (
+              <div style={{ marginBottom: 18 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>
+                  Color:&nbsp;
+                  <span style={{ color: 'var(--primary)', fontWeight: 800 }}>
+                    {activeVariantIdx === -1
+                      ? (product.colorName || 'Default')
+                      : product.colorVariants[activeVariantIdx]?.colorName}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  {/* Main product color swatch */}
+                  <button
+                    onClick={() => { setActiveVariantIdx(-1); setActiveImageIdx(0); }}
+                    title={product.colorName || 'Default'}
+                    style={{
+                      width: 40, height: 40, borderRadius: '50%',
+                      background: product.color || '#8B1A1A',
+                      border: activeVariantIdx === -1 ? '3px solid var(--primary)' : '3px solid transparent',
+                      outline: activeVariantIdx === -1 ? '2px solid var(--accent)' : '2px solid transparent',
+                      cursor: 'pointer', padding: 0,
+                      boxShadow: activeVariantIdx === -1 ? '0 0 0 3px rgba(201,149,108,0.3)' : 'none',
+                      transition: 'all 0.15s',
+                    }}
+                  />
+                  {/* Variant swatches */}
+                  {product.colorVariants.map((v, i) => (
+                    <div key={v.id || i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                      <button
+                        onClick={() => { setActiveVariantIdx(i); setActiveImageIdx(0); }}
+                        title={v.colorName}
+                        style={{
+                          width: 40, height: 40, borderRadius: '50%',
+                          background: v.colorHex || '#888',
+                          border: activeVariantIdx === i ? '3px solid var(--primary)' : '3px solid transparent',
+                          outline: activeVariantIdx === i ? '2px solid var(--accent)' : '2px solid transparent',
+                          cursor: 'pointer', padding: 0,
+                          boxShadow: activeVariantIdx === i ? '0 0 0 3px rgba(201,149,108,0.3)' : 'none',
+                          transition: 'all 0.15s',
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Rating */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
