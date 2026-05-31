@@ -26,13 +26,30 @@ export default function ProductDetail() {
     if (id) setProductReviews(reviewsDB.getByProduct(id));
   }, [id]);
 
+  function normalizeProduct(p) {
+    if (!p) return null;
+    return {
+      ...p,
+      imageUrl:      p.imageUrl      || p.image_url      || '',
+      originalPrice: p.originalPrice ?? p.original_price ?? null,
+      inStock:       p.inStock       ?? p.in_stock       ?? p.stock ?? true,
+      isNew:         p.isNew         ?? p.is_new         ?? false,
+      isTrending:    p.isTrending    ?? p.is_trending    ?? false,
+      occasions:     Array.isArray(p.occasions) && p.occasions.length ? p.occasions : (p.occasion ? [p.occasion] : []),
+      images:        Array.isArray(p.images) ? p.images : (p.imageUrl || p.image_url ? [{ src: p.imageUrl || p.image_url }] : []),
+      color:         p.color || '#8B1A1A',
+      rating:        p.rating || 4.5,
+      reviews:       p.reviews || 0,
+    };
+  }
+
   useEffect(() => {
     if (!product) setLoadingProduct(true);
     productsAPI.getById(id)
-      .then(data => { if (data) setProduct(data); })
+      .then(data => { if (data) setProduct(normalizeProduct(data)); })
       .catch(() => {
         const local = productsDB.getAll().find(p => p.id === id);
-        if (local) setProduct(local);
+        if (local) setProduct(normalizeProduct(local));
       })
       .finally(() => setLoadingProduct(false));
   }, [id]);

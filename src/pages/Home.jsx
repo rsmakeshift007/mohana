@@ -159,9 +159,23 @@ export default function Home() {
     setHomeReviews(real.length >= 3 ? real.slice(0, 3) : FALLBACK_REVIEWS);
   }, []);
 
+  function normalizeProduct(p) {
+    return {
+      ...p,
+      imageUrl:      p.imageUrl   || p.image_url      || '',
+      originalPrice: p.originalPrice ?? p.original_price ?? null,
+      inStock:       p.inStock    ?? p.in_stock       ?? p.stock ?? true,
+      isNew:         p.isNew      ?? p.is_new         ?? false,
+      isTrending:    p.isTrending ?? p.is_trending    ?? false,
+      occasions:     Array.isArray(p.occasions) && p.occasions.length ? p.occasions : (p.occasion ? [p.occasion] : []),
+      images:        Array.isArray(p.images) ? p.images : (p.imageUrl || p.image_url ? [{ src: p.imageUrl || p.image_url }] : []),
+      color:         p.color || '#8B1A1A',
+    };
+  }
+
   useEffect(() => {
     productsAPI.getAll()
-      .then(data => { if (data && data.length > 0) setAllProducts(data); })
+      .then(data => { if (data && data.length > 0) setAllProducts(data.map(normalizeProduct)); })
       .catch(() => setAllProducts(productsDB.getAll()));
   }, []);
 

@@ -2934,14 +2934,27 @@ export default function Admin() {
   }
 
   async function handleDelete(id) {
-    if (useBackend) {
-      try { await productsAPI.delete(id); } catch {}
+    // Delete from Supabase (cross-device)
+    try { await supabaseProductsAPI.delete(id); } catch {}
+    // Also try to delete using supabase_id if stored
+    const local = productsDB.getAll().find(p => p.id === id);
+    if (local?._supabase_id) {
+      try { await supabaseProductsAPI.delete(local._supabase_id); } catch {}
     }
     productsDB.delete(id);
     await refreshProducts();
   }
 
   async function handleToggleStock(id) {
+    // Toggle in Supabase
+    const local = productsDB.getAll().find(p => p.id === id);
+    const newStock = !(local?.inStock !== false);
+    try {
+      await supabaseProductsAPI.update(id, { stock: newStock, in_stock: newStock });
+    } catch {}
+    if (local?._supabase_id) {
+      try { await supabaseProductsAPI.update(local._supabase_id, { stock: newStock, in_stock: newStock }); } catch {}
+    }
     if (useBackend) {
       try { await productsAPI.toggleStock(id); } catch {}
     }
