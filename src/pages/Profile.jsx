@@ -66,12 +66,46 @@ export default function Profile() {
   }
 
   // Build profile from Supabase user
-  const profile = {
+  const [profile, setProfile] = useState({
     name: user?.user_metadata?.name || user?.email?.split('@')[0] || 'Guest',
     email: user?.email || '',
     phone: user?.user_metadata?.phone || '',
     city: user?.user_metadata?.city || '',
-  };
+  });
+  const [saving, setSaving] = useState(false);
+
+  // Sync profile from Supabase profiles table on mount
+  useEffect(() => {
+    if (!user?.id) return;
+    import('../services/supabase').then(({ supabase }) => {
+      supabase.from('profiles').select('*').eq('id', user.id).single()
+        .then(({ data }) => {
+          if (data) setProfile(p => ({
+            ...p,
+            name: data.name || p.name,
+            phone: data.phone || p.phone,
+            city: data.city || p.city,
+          }));
+        }).catch(() => {});
+    });
+  }, [user?.id]);
+
+  async function handleSaveProfile() {
+    if (!user?.id) return;
+    setSaving(true);
+    try {
+      const { supabase } = await import('../services/supabase');
+      // Update Supabase auth metadata
+      await supabase.auth.updateUser({ data: { name: profile.name, phone: profile.phone, city: profile.city } });
+      // Update profiles table
+      await supabase.from('profiles').upsert({
+        id: user.id, email: user.email,
+        name: profile.name, phone: profile.phone, city: profile.city,
+      }, { onConflict: 'id' });
+    } catch (e) { console.warn('Profile save:', e.message); }
+    setSaving(false);
+    setEditMode(false);
+  }
 
   const initial = profile.name.charAt(0).toUpperCase();
 
@@ -150,14 +184,15 @@ export default function Profile() {
               </div>
             </div>
 
-            <button onClick={() => setEditMode(!editMode)}
+            <button onClick={() => editMode ? handleSaveProfile() : setEditMode(true)}
+              disabled={saving}
               style={{
                 padding: '8px 16px', borderRadius: 8,
                 background: editMode ? 'var(--accent)' : 'rgba(255,255,255,0.1)',
                 color: 'white', border: '1px solid rgba(255,255,255,0.2)',
                 fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
               }}>
-              {editMode ? '✓ Save' : '✏️ Edit'}
+              {saving ? '⏳ Saving...' : editMode ? '✓ Save' : '✏️ Edit'}
             </button>
           </div>
         </div>

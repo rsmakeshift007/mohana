@@ -3011,61 +3011,107 @@ function CategoriesManager() {
 }
 
 // ─── Customers Section ───────────────────────
-function CustomersSection({ useBackend }) {
-  const [customers, setCustomers] = useState(() => customersDB.getAll());
+function CustomersSection() {
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
-    if (useBackend) {
-      customersAPI.getAll()
-        .then(data => setCustomers(data))
-        .catch(() => setCustomers(customersDB.getAll()));
-    }
-  }, [useBackend]);
+    import('../services/supabase').then(({ supabase }) => {
+      supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .then(({ data, error }) => {
+          if (!error && data) setCustomers(data);
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    });
+  }, []);
+
+  const filtered = customers.filter(c => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (c.name||'').toLowerCase().includes(q) || (c.email||'').toLowerCase().includes(q) || (c.phone||'').includes(q);
+  });
+
+  function exportCSV() {
+    const rows = [['Name','Email','Phone','City','Joined']];
+    customers.forEach(c => rows.push([c.name||'', c.email||'', c.phone||'', c.city||'', c.created_at ? new Date(c.created_at).toLocaleDateString('en-IN') : '']));
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const a = document.createElement('a'); a.href = 'data:text/csv,' + encodeURIComponent(csv); a.download = 'mohanah_customers.csv'; a.click();
+  }
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 900 }}>👥 Customers ({customers.length})</h2>
-        <button className="btn btn-accent btn-sm">Export CSV</button>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <input value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="🔍 Search by name, email, phone..."
+            style={{ padding: '8px 12px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, outline: 'none', minWidth: 220 }} />
+          <button onClick={exportCSV} className="btn btn-accent btn-sm">📥 Export CSV</button>
+        </div>
       </div>
-      <div className="card" style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
-          <thead>
-            <tr style={{ background: 'var(--surface-alt)' }}>
-              {['Customer', 'Contact', 'City', 'Orders', 'Total Spent', 'Joined', 'Actions'].map(h => (
-                <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1, whiteSpace: 'nowrap' }}>{h.toUpperCase()}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {customers.map(c => (
-              <tr key={c.id} style={{ borderBottom: '1px solid var(--border)' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-alt)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'white'}>
-                <td style={{ padding: '12px 16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-light)', fontWeight: 800, fontSize: 13, fontFamily: 'var(--font-serif)', flexShrink: 0 }}>{c.name[0]}</div>
-                    <span style={{ fontWeight: 700, fontSize: 13 }}>{c.name}</span>
-                  </div>
-                </td>
-                <td style={{ padding: '12px 16px' }}>
-                  <div style={{ fontSize: 12, color: 'var(--text-sec)' }}>{c.email}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{c.phone}</div>
-                </td>
-                <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-sec)' }}>{c.city}</td>
-                <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 700, color: 'var(--primary)', textAlign: 'center' }}>{c.orders}</td>
-                <td style={{ padding: '12px 16px', fontFamily: 'var(--font-serif)', fontSize: 14, fontWeight: 800, color: 'var(--primary)', whiteSpace: 'nowrap' }}>₹{c.spent.toLocaleString('en-IN')}</td>
-                <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{c.joined}</td>
-                <td style={{ padding: '12px 16px' }}>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, background: '#E3F2FD', color: '#1565C0', border: 'none', cursor: 'pointer', fontWeight: 700 }}>View</button>
-                    <button style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, background: '#E8F5E9', color: 'var(--success)', border: 'none', cursor: 'pointer', fontWeight: 700 }}>Email</button>
-                  </div>
-                </td>
+
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-muted)' }}>Loading customers...</div>
+      ) : customers.length === 0 ? (
+        <div className="card" style={{ padding: 48, textAlign: 'center' }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>👥</div>
+          <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>No customers yet</div>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+            Customers will appear here once they sign up on your store.<br />
+            Make sure the profiles table and trigger are set up in Supabase.
+          </p>
+        </div>
+      ) : (
+        <div className="card" style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 600 }}>
+            <thead>
+              <tr style={{ background: 'var(--surface-alt)' }}>
+                {['Customer', 'Email', 'Phone', 'City', 'Joined', 'Actions'].map(h => (
+                  <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1 }}>{h.toUpperCase()}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {filtered.map(c => (
+                <tr key={c.id} style={{ borderBottom: '1px solid var(--border)' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-alt)'}
+                  onMouseLeave={e => e.currentTarget.style.background = ''}>
+                  <td style={{ padding: '12px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-light)', fontWeight: 800, fontSize: 14, flexShrink: 0 }}>
+                        {(c.name || c.email || '?')[0].toUpperCase()}
+                      </div>
+                      <span style={{ fontWeight: 700, fontSize: 13 }}>{c.name || '—'}</span>
+                    </div>
+                  </td>
+                  <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-sec)' }}>{c.email || '—'}</td>
+                  <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-sec)' }}>{c.phone || '—'}</td>
+                  <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-sec)' }}>{c.city || '—'}</td>
+                  <td style={{ padding: '12px 16px', fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                    {c.created_at ? new Date(c.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    {c.email && (
+                      <a href={`mailto:${c.email}`}
+                        style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, background: '#E8F5E9', color: 'var(--success)', textDecoration: 'none', fontWeight: 700 }}>
+                        ✉️ Email
+                      </a>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {filtered.length === 0 && search && (
+            <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)', fontSize: 13 }}>No customers match "{search}"</div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -3421,7 +3467,7 @@ export default function Admin() {
         {activeSection === 'orders' && <OrdersSection useBackend={useBackend} />}
 
         {/* ── Customers ── */}
-        {activeSection === 'customers' && <CustomersSection useBackend={useBackend} />}
+        {activeSection === 'customers' && <CustomersSection />}
 
         {/* ── Banner ── */}
         {activeSection === 'banner' && <BannerSection />}
