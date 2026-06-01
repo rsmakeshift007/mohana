@@ -131,7 +131,12 @@ export default function Catalog() {
       isNew:         p.isNew         ?? p.is_new         ?? false,
       isTrending:    p.isTrending    ?? p.is_trending    ?? false,
       occasions:     Array.isArray(p.occasions) && p.occasions.length ? p.occasions : (p.occasion ? [p.occasion] : []),
-      images:        Array.isArray(p.images) ? p.images : [],
+      images:        (() => {
+        const arr = Array.isArray(p.images) ? p.images : [];
+        if (arr.length) return arr;
+        const url = p.imageUrl || p.image_url || '';
+        return url ? [{ src: url }] : [];
+      })(),
       color:         p.color || '#8B1A1A',
     };
   }
