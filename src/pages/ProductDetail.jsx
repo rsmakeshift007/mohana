@@ -154,7 +154,7 @@ export default function ProductDetail() {
         </div>
 
         {/* Main Grid */}
-        <div className="product-detail-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, alignItems: 'start' }}>
+        <div className="product-detail-grid">
 
           {/* ── Left: Image ── */}
           {(() => {
@@ -187,9 +187,6 @@ export default function ProductDetail() {
               style={{
                 borderRadius: 'var(--radius-xl)',
                 background: '#f8f4ef',
-                width: '100%',
-                aspectRatio: '3/4',
-                maxHeight: 'min(540px, calc(100vh - 160px))',
                 position: 'relative', overflow: 'hidden',
                 boxShadow: 'var(--shadow-lg)',
                 cursor: allImages.length > 1 ? 'pointer' : 'default',
@@ -680,18 +677,31 @@ export default function ProductDetail() {
       </div>
 
       <style>{`
+        /* Desktop: 2-column grid */
+        .product-detail-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 40px;
+          align-items: start;
+        }
+        /* Desktop image: square-ish, max 520px tall */
         .product-image-container {
-          aspect-ratio: 3/4;
           width: 100%;
+          aspect-ratio: 3/4;
+          max-height: 520px;
           touch-action: pan-y;
         }
+        /* Mobile: single column, full-width image */
         @media (max-width: 768px) {
-          .product-grid { grid-template-columns: 1fr !important; }
-          .product-detail-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
+          .product-detail-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+          }
           .product-image-container {
+            width: 100%;
+            max-height: none;
             aspect-ratio: 4/5;
-            border-radius: 12px !important;
-            width: 100% !important;
+            border-radius: 12px;
           }
         }
       `}</style>
