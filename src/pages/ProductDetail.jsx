@@ -366,7 +366,7 @@ export default function ProductDetail() {
               padding: '14px 16px', marginBottom: 20,
               display: 'flex', alignItems: 'center', gap: 12,
             }}>
-              <span style={{ fontFamily: 'var(--font-serif)', fontSize: 28, fontWeight: 900, color: 'var(--primary)' }}>
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: 28, fontWeight: 900, color: 'var(--primary)' }}>
                 ₹{product.price.toLocaleString('en-IN')}
               </span>
               {product.originalPrice && (

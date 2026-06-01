@@ -111,7 +111,7 @@ function ProductCard({ product }) {
 
           {/* Price */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-            <span style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 800, color: 'var(--primary)' }}>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 18, fontWeight: 800, color: 'var(--primary)' }}>
               ₹{product.price.toLocaleString('en-IN')}
             </span>
             {product.originalPrice && (

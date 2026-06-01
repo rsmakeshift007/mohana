@@ -70,7 +70,7 @@ function ProductCard({ product }) {
             <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>({product.reviews})</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-            <span style={{ fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 800, color: 'var(--primary)' }}>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 16, fontWeight: 800, color: 'var(--primary)' }}>
               ₹{product.price.toLocaleString('en-IN')}
             </span>
             {product.originalPrice && (
@@ -97,7 +97,7 @@ function ProductCard({ product }) {
 export default function Catalog() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [sortBy, setSortBy] = useState('default');
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters, setShowFilters] = useState(window.innerWidth > 768);
   const [selectedOccasion, setSelectedOccasion] = useState(searchParams.get('occasion') || 'All');
   const [selectedFabric, setSelectedFabric] = useState(searchParams.get('fabric') || 'All');
   const [selectedPrice, setSelectedPrice] = useState(0);
@@ -238,7 +238,16 @@ export default function Catalog() {
                 {occasions.map(occ => (
                   <label key={occ} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, cursor: 'pointer' }}>
                     <input type="radio" name="occasion" checked={selectedOccasion === occ}
-                      onChange={() => setSelectedOccasion(occ)}
+                      onChange={() => {
+                        setSelectedOccasion(occ);
+                        // Clear URL filterType so "All" shows everything
+                        const p = new URLSearchParams(searchParams);
+                        p.delete('filter');
+                        if (occ === 'All') p.delete('occasion'); else p.set('occasion', occ);
+                        setSearchParams(p);
+                        // Auto-close on mobile
+                        if (window.innerWidth <= 768) setShowFilters(false);
+                      }}
                       style={{ accentColor: 'var(--accent)' }} />
                     <span style={{ fontSize: 13, color: selectedOccasion === occ ? 'var(--accent)' : 'var(--text)', fontWeight: selectedOccasion === occ ? 700 : 400 }}>
                       {occ}
@@ -253,7 +262,13 @@ export default function Catalog() {
                 {fabrics.map(fab => (
                   <label key={fab} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, cursor: 'pointer' }}>
                     <input type="radio" name="fabric" checked={selectedFabric === fab}
-                      onChange={() => setSelectedFabric(fab)}
+                      onChange={() => {
+                        setSelectedFabric(fab);
+                        const p = new URLSearchParams(searchParams);
+                        if (fab === 'All') p.delete('fabric'); else p.set('fabric', fab);
+                        setSearchParams(p);
+                        if (window.innerWidth <= 768) setShowFilters(false);
+                      }}
                       style={{ accentColor: 'var(--accent)' }} />
                     <span style={{ fontSize: 13, color: selectedFabric === fab ? 'var(--accent)' : 'var(--text)', fontWeight: selectedFabric === fab ? 700 : 400 }}>
                       {fab}
@@ -322,7 +337,7 @@ export default function Catalog() {
             {loading ? (
               <div style={{ textAlign: 'center', padding: '80px 20px' }}>
                 <div style={{ fontSize: 48, marginBottom: 12, animation: 'spin 1s linear infinite', display: 'inline-block' }}>🥻</div>
-                <p style={{ color: 'var(--text-sec)', fontSize: 14 }}>Sarees load ho rahi hain...</p>
+                <p style={{ color: 'var(--text-sec)', fontSize: 14 }}>Loading sarees...</p>
                 <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
               </div>
             ) : filtered.length === 0 ? (
