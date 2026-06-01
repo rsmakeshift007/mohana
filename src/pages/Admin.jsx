@@ -525,7 +525,7 @@ function ProductForm({ onSave, onCancel, editProduct }) {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
               <div>
                 <div style={{ fontWeight: 800, fontSize: 13, color: '#6A1B9A' }}>🎨 COLOR VARIANTS</div>
-                <div style={{ fontSize: 11, color: '#9C27B0', marginTop: 2 }}>Same saree, alag colors — customer click karke switch kar sakta hai</div>
+                <div style={{ fontSize: 11, color: '#9C27B0', marginTop: 2 }}>Same saree in different colors — customers can click swatches to switch</div>
               </div>
               <button type="button" onClick={() => setShowVariantForm(v => !v)}
                 style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: '#9C27B0', color: 'white', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
@@ -810,7 +810,7 @@ function OrdersSection({ useBackend }) {
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontFamily: 'var(--font-serif)', fontSize: 14, fontWeight: 800, color: 'var(--primary)', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 800, color: 'var(--primary)', whiteSpace: 'nowrap' }}>
                     ₹{(o.price || 0).toLocaleString('en-IN')}
                   </span>
                   <span style={{ padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: statusBg[o.status], color: statusColor[o.status], whiteSpace: 'nowrap' }}>
@@ -979,7 +979,7 @@ function InventorySection({ products, onEdit, onDelete, onToggleStock }) {
                 </div>
               )}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                <span style={{ fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 800, color: 'var(--primary)' }}>₹{p.price.toLocaleString('en-IN')}</span>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 16, fontWeight: 800, color: 'var(--primary)' }}>₹{p.price.toLocaleString('en-IN')}</span>
                 {p.originalPrice && <span style={{ fontSize: 11, color: 'var(--text-muted)', textDecoration: 'line-through' }}>₹{p.originalPrice.toLocaleString('en-IN')}</span>}
                 {p.discount > 0 && <span style={{ fontSize: 10, fontWeight: 700, background: '#E8F5E9', color: 'var(--success)', padding: '1px 6px', borderRadius: 8 }}>{p.discount}%</span>}
               </div>
@@ -1149,7 +1149,7 @@ function BannerSection() {
         <div className="card" style={{ padding: 24 }}>
           <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 17, marginBottom: 4 }}>📸 Banner Photos</div>
           <div style={{ fontSize: 12, color: 'var(--text-sec)', marginBottom: 18 }}>
-            Each photo = one banner slide. Upload karo, details bharo, save karo — homepage pe live ho jayega.
+            Each photo = one banner slide. Upload photos, fill in the details, save — changes go live on homepage instantly.
           </div>
 
           <ImageUploadZone
@@ -1170,7 +1170,7 @@ function BannerSection() {
                 onClick={() => setShowMeta(m => !m)}
                 style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--surface-alt)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 14px', cursor: 'pointer', fontFamily: 'var(--font-sans)', marginBottom: showMeta ? 14 : 0 }}
               >
-                <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--primary)' }}>✏️ Slide Details — naam, price, button set karo</span>
+                <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--primary)' }}>✏️ Slide Details — set title, price &amp; button for each slide</span>
                 <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{showMeta ? '▲ Hide' : '▼ Show'} ({bannerImages.length} slides)</span>
               </button>
 
@@ -1184,7 +1184,7 @@ function BannerSection() {
                     <div>
                       <div style={{ color: 'var(--accent-light)', fontWeight: 800, fontSize: 13 }}>Slide #{i + 1}</div>
                       <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10 }}>
-                        {img.title ? `"${img.title}"` : 'Title set karo'}
+                        {img.title ? `"${img.title}"` : 'No title set'}
                       </div>
                     </div>
                     {img.title && img.ctaLink && (
@@ -1333,8 +1333,8 @@ function BannerSection() {
       <div style={{ marginTop: 20, background: 'var(--surface-alt)', borderRadius: 'var(--radius-lg)', padding: '16px 20px', border: '1px solid var(--border)' }}>
         <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 8 }}>📌 How it works</div>
         <div style={{ fontSize: 12, color: 'var(--text-sec)', lineHeight: 1.8 }}>
-          <strong>Step 1:</strong> Photos upload karo. &nbsp;·&nbsp; <strong>Step 2:</strong> Har slide ke liye naam, price, button bharo. &nbsp;·&nbsp; <strong>Step 3:</strong> "Save" dabao.<br />
-          Customer banner pe button click karega to seedha us saree ki page pe jayega aur cart me add kar sakta hai. 🛍️
+          <strong>Step 1:</strong> Upload photos. &nbsp;·&nbsp; <strong>Step 2:</strong> Fill in the title, price &amp; button for each slide. &nbsp;·&nbsp; <strong>Step 3:</strong> Click "Save".<br />
+          Customers clicking the banner button will land directly on that product page and can add it to cart. 🛍️
         </div>
       </div>
     </div>
@@ -1715,7 +1715,7 @@ function VendorSection() {
             <div style={{ fontSize: 44, marginBottom: 12 }}>⚠️</div>
             <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 18, marginBottom: 8 }}>Delete this vendor?</h3>
             <p style={{ fontSize: 13, color: 'var(--text-sec)', marginBottom: 20, lineHeight: 1.6 }}>
-              "{vendors.find(v => v.id === deleteId)?.name}" ko delete karne ke baad undo nahi hoga.
+              Deleting "{vendors.find(v => v.id === deleteId)?.name}" is permanent and cannot be undone.
             </p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
               <button onClick={() => handleDelete(deleteId)}
@@ -1810,7 +1810,7 @@ function LegalSection() {
         <div>
           <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 900, marginBottom: 4 }}>📜 Legal Pages</h2>
           <p style={{ fontSize: 13, color: 'var(--text-sec)' }}>
-            Yahan se sare legal pages ka content update karo. Changes turant website par dikh jaate hain.
+            Update the content for all legal pages below. Changes are reflected on the website immediately.
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
@@ -1925,7 +1925,7 @@ function LegalSection() {
 
           {/* Auto-fill variables info */}
           <div style={{ marginBottom: 20, background: '#E3F2FD', borderRadius: 10, padding: '12px 16px', border: '1px solid #BBDEFB' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#1565C0', marginBottom: 6 }}>🔁 Auto-fill Variables (Settings se automatically fill hoga)</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#1565C0', marginBottom: 6 }}>🔁 Auto-fill Variables (automatically replaced from your Settings)</div>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               {['{storeName}', '{phone}', '{email}', '{address}', '{whatsapp}', '{freeDelivery}'].map(v => (
                 <code key={v} style={{ fontSize: 11, background: 'white', padding: '2px 8px', borderRadius: 4, border: '1px solid #BBDEFB', color: '#1565C0' }}>{v}</code>
@@ -2610,7 +2610,7 @@ function SettingsSection({ useBackend }) {
       {/* ── Delivery Info (shown on every product page) ── */}
       <div className="card" style={{ padding: 24, marginTop: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 16, marginBottom: 4 }}>🚚 Product Page — Delivery Info</div>
-        <p style={{ fontSize: 12, color: 'var(--text-sec)', marginTop: -8 }}>Yeh teeno lines har product detail page par dikhti hain. Edit karo ya blank chhodo to hide karo.</p>
+        <p style={{ fontSize: 12, color: 'var(--text-sec)', marginTop: -8 }}>These 3 lines appear on every product detail page. Edit or leave blank to hide.</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {[
             ['DELIVERY LINE', 'deliveryLine1', '🚚', 'Free delivery on orders above ₹2,000'],
@@ -2634,7 +2634,7 @@ function SettingsSection({ useBackend }) {
       {/* ── Hero Banner Text ── */}
       <div className="card" style={{ padding: 24, marginTop: 24 }}>
         <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 16, marginBottom: 4 }}>🏠 Home Page — Hero Text</div>
-        <p style={{ fontSize: 12, color: 'var(--text-sec)', marginBottom: 16 }}>Home page ka main heading, subtitle, buttons aur stats yahan se change karo.</p>
+        <p style={{ fontSize: 12, color: 'var(--text-sec)', marginBottom: 16 }}>Edit the home page heading, subtitle, buttons and stats from here.</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           {[
             ['BADGE TEXT', 'heroBadge', 'NEW COLLECTION 2024'],

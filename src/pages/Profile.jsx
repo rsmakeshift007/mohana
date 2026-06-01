@@ -217,7 +217,7 @@ export default function Profile() {
               padding: '16px 12px', textAlign: 'center',
               borderRight: i < 3 ? '1px solid var(--border)' : 'none',
             }}>
-              <div style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 900, color: 'var(--primary)' }}>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 20, fontWeight: 900, color: 'var(--primary)' }}>
                 {stat.num}
               </div>
               <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: 1 }}>

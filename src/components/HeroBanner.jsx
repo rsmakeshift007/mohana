@@ -150,7 +150,7 @@ function PhotoPanel({ imgList, img, isMobile }) {
         <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 5 }}>{slide.subtitle}</p>
         {slide.price && (
           <div style={{ marginBottom: 10 }}>
-            <span style={{ fontFamily: 'var(--font-serif)', fontSize: isMobile ? 18 : 22, fontWeight: 900, color: 'var(--accent)' }}>{slide.price}</span>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: isMobile ? 18 : 22, fontWeight: 900, color: 'var(--accent)' }}>{slide.price}</span>
           </div>
         )}
         <div style={{ pointerEvents: 'auto' }}>
@@ -233,7 +233,7 @@ function ReelPanel({ reelList, reel, imgList, isMobile }) {
                 {reelSlide.name || reelSlide.label || 'Add Reel'}
               </div>
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.18)', lineHeight: 1.6 }}>
-                Admin → Banner/Reels se upload karo
+                Upload from Admin → Banner / Reels
               </div>
             </div>
             <div style={{ width: 54, height: 54, borderRadius: '50%', border: '1.5px solid rgba(201,149,108,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

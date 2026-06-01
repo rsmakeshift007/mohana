@@ -308,7 +308,7 @@ export default function Home() {
                   { num: heroText.stat3Num, label: heroText.stat3Label },
                 ].filter(s => s.num).map(stat => (
                   <div key={stat.label}>
-                    <div style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 800, color: 'var(--accent)' }}>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 22, fontWeight: 800, color: 'var(--accent)' }}>
                       {stat.num}
                     </div>
                     <div style={{ fontSize: 11, color: '#6A8A5A', fontWeight: 600, letterSpacing: 1 }}>
