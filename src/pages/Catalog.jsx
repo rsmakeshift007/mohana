@@ -32,10 +32,11 @@ function ProductCard({ product }) {
               background: imgSrc ? '#f0ebe4' : `linear-gradient(135deg, ${product.color}CC, ${product.color}44)`,
               position: 'relative',
               borderRadius: 'var(--radius-md) var(--radius-md) 0 0', overflow: 'hidden',
+              display: 'flex', alignItems: 'stretch',
             }}>
               {imgSrc ? (
-                <img src={imgSrc} alt={product.name} loading="lazy"
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                <img src={imgSrc} alt={product.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               ) : (
                 <>
                   <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 56, opacity: 0.3 }}>🥻</div>
