@@ -24,7 +24,7 @@ function StatCard({ icon, label, value, sub, color, bg }) {
     <div style={{ background: bg || 'var(--surface)', borderRadius: 'var(--radius-lg)', padding: '18px 20px', border: '1px solid var(--border)', position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', right: -10, top: -10, width: 70, height: 70, borderRadius: '50%', background: `${color}18` }} />
       <div style={{ fontSize: 28, marginBottom: 8 }}>{icon}</div>
-      <div style={{ fontFamily: 'var(--font-serif)', fontSize: 26, fontWeight: 900, color: color || 'var(--primary)', marginBottom: 2 }}>{value}</div>
+      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 26, fontWeight: 900, color: color || 'var(--primary)', marginBottom: 2 }}>{value}</div>
       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{label}</div>
       {sub && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{sub}</div>}
     </div>
@@ -2080,7 +2080,7 @@ function SocialOrdersSection() {
         ].map(s => (
           <div key={s.label} className="card" style={{ padding:'14px 16px', display:'flex', flexDirection:'column', gap:4, border:`1px solid ${s.color}30` }}>
             <div style={{ fontSize:22 }}>{s.icon}</div>
-            <div style={{ fontFamily:'var(--font-serif)', fontSize:20, fontWeight:900, color:s.color }}>{s.value}</div>
+            <div style={{ fontFamily:'var(--font-sans)', fontSize:20, fontWeight:900, color:s.color }}>{s.value}</div>
             <div style={{ fontSize:11, fontWeight:700, color:'var(--text-muted)' }}>{s.label}</div>
           </div>
         ))}
@@ -2356,7 +2356,7 @@ function SocialOrdersSection() {
 
                   {/* Price & Profit */}
                   <div style={{ display:'flex', flexDirection:'column', gap:3, alignItems:'flex-end', minWidth:120 }}>
-                    <div style={{ fontFamily:'var(--font-serif)', fontSize:18, fontWeight:900, color:'var(--primary)' }}>₹{Number(o.soldPrice).toLocaleString('en-IN')}</div>
+                    <div style={{ fontFamily:'var(--font-sans)', fontSize:18, fontWeight:900, color:'var(--primary)' }}>₹{Number(o.soldPrice).toLocaleString('en-IN')}</div>
                     {o.costPrice > 0 && (
                       <div style={{ fontSize:11, color:'var(--text-muted)' }}>Cost: ₹{Number(o.costPrice).toLocaleString('en-IN')}</div>
                     )}
@@ -3458,7 +3458,7 @@ export default function Admin() {
                           onMouseLeave={e => e.currentTarget.style.background = 'white'}>
                           <td style={{ padding: '11px 16px', fontSize: 12, fontWeight: 700, color: 'var(--accent)' }}>{o.id}</td>
                           <td style={{ padding: '11px 16px', fontFamily: 'var(--font-serif)', fontSize: 13, fontWeight: 700 }}>{o.product}</td>
-                          <td style={{ padding: '11px 16px', fontFamily: 'var(--font-serif)', fontSize: 14, fontWeight: 800, color: 'var(--primary)' }}>₹{o.price.toLocaleString('en-IN')}</td>
+                          <td style={{ padding: '11px 16px', fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 800, color: 'var(--primary)' }}>₹{o.price.toLocaleString('en-IN')}</td>
                           <td style={{ padding: '11px 16px' }}><span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: cfg.bg, color: cfg.c }}>{cfg.l}</span></td>
                         </tr>
                       );
@@ -3484,7 +3484,7 @@ export default function Admin() {
                       <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.reviews} reviews</div>
                     </div>
                     <span style={{ fontSize: 11, fontWeight: 700, color: '#F57F17' }}>{p.rating}★</span>
-                    <span style={{ fontFamily: 'var(--font-serif)', fontSize: 13, fontWeight: 800, color: 'var(--primary)' }}>₹{p.price.toLocaleString('en-IN')}</span>
+                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 800, color: 'var(--primary)' }}>₹{p.price.toLocaleString('en-IN')}</span>
                   </div>
                 ))}
               </div>
