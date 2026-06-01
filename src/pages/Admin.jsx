@@ -2426,7 +2426,7 @@ function SettingsSection({ useBackend }) {
     // Load from Supabase (cross-device)
     supabaseCategoriesAPI.getAll && (() => {})(); // ensure import loaded
     import('../services/supabase').then(({ settingsAPI: sAPI }) => {
-      const keys = ['storeName','tagline','email','phone','address','gstNumber','instagram','facebook','whatsappNumber','upiId','currency','deliveryLine1','deliveryLine2','deliveryLine3'];
+      const keys = ['storeName','tagline','email','phone','address','gstNumber','instagram','facebook','whatsappNumber','upiId','currency','deliveryLine1','deliveryLine2','deliveryLine3','heroBadge','heroTitle1','heroTitle2','heroSubtitle','heroBtn1','heroBtn2','heroStat1Num','heroStat1Label','heroStat2Num','heroStat2Label','heroStat3Num','heroStat3Label'];
       Promise.all(keys.map(k => sAPI.get(k).then(v => ({ k, v })).catch(() => ({ k, v: null }))))
         .then(results => {
           const fromDB = {};
@@ -2446,7 +2446,7 @@ function SettingsSection({ useBackend }) {
     // Save each key to Supabase (cross-device)
     try {
       const { settingsAPI: sAPI } = await import('../services/supabase');
-      const keys = ['storeName','tagline','email','phone','address','gstNumber','instagram','facebook','whatsappNumber','upiId','currency','deliveryLine1','deliveryLine2','deliveryLine3'];
+      const keys = ['storeName','tagline','email','phone','address','gstNumber','instagram','facebook','whatsappNumber','upiId','currency','deliveryLine1','deliveryLine2','deliveryLine3','heroBadge','heroTitle1','heroTitle2','heroSubtitle','heroBtn1','heroBtn2','heroStat1Num','heroStat1Label','heroStat2Num','heroStat2Label','heroStat3Num','heroStat3Label'];
       await Promise.all(keys.map(k => settings[k] != null ? sAPI.set(k, settings[k]) : Promise.resolve()));
     } catch (e) { console.warn('Settings Supabase save failed:', e.message); }
     setSaved(true);
@@ -2628,6 +2628,51 @@ function SettingsSection({ useBackend }) {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* ── Hero Banner Text ── */}
+      <div className="card" style={{ padding: 24, marginTop: 24 }}>
+        <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 16, marginBottom: 4 }}>🏠 Home Page — Hero Text</div>
+        <p style={{ fontSize: 12, color: 'var(--text-sec)', marginBottom: 16 }}>Home page ka main heading, subtitle, buttons aur stats yahan se change karo.</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          {[
+            ['BADGE TEXT', 'heroBadge', 'NEW COLLECTION 2024'],
+            ['HEADING LINE 1', 'heroTitle1', 'Where Every Saree'],
+            ['HEADING LINE 2 (colored)', 'heroTitle2', 'Tells A Story'],
+            ['SUBTITLE', 'heroSubtitle', 'Discover handcrafted sarees...'],
+            ['BUTTON 1', 'heroBtn1', 'Explore Collection'],
+            ['BUTTON 2', 'heroBtn2', 'New Arrivals'],
+          ].map(([label, key, placeholder]) => (
+            <div key={key} style={key === 'heroSubtitle' ? { gridColumn: '1 / -1' } : {}}>
+              <label style={labelSt}>{label}</label>
+              <input value={settings[key] || ''} onChange={e => setSettings(s => ({ ...s, [key]: e.target.value }))}
+                placeholder={placeholder} style={inputSt}
+                onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                onBlur={e => e.target.style.borderColor = 'var(--border)'} />
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 14 }}>
+          <label style={{ ...labelSt, marginBottom: 10 }}>STATS (3 numbers shown below buttons)</label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+            {[
+              ['heroStat1Num', '500+', 'heroStat1Label', 'Sarees'],
+              ['heroStat2Num', '10K+', 'heroStat2Label', 'Happy Customers'],
+              ['heroStat3Num', '4.8★', 'heroStat3Label', 'Avg Rating'],
+            ].map(([nKey, nPh, lKey, lPh]) => (
+              <div key={nKey} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <input value={settings[nKey] || ''} onChange={e => setSettings(s => ({ ...s, [nKey]: e.target.value }))}
+                  placeholder={nPh} style={{ ...inputSt, fontWeight: 800, fontSize: 16 }}
+                  onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                  onBlur={e => e.target.style.borderColor = 'var(--border)'} />
+                <input value={settings[lKey] || ''} onChange={e => setSettings(s => ({ ...s, [lKey]: e.target.value }))}
+                  placeholder={lPh} style={{ ...inputSt, fontSize: 11 }}
+                  onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                  onBlur={e => e.target.style.borderColor = 'var(--border)'} />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

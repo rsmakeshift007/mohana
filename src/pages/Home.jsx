@@ -144,14 +144,51 @@ const FALLBACK_REVIEWS = [
   { id: 'f3', name: 'Sunita Agarwal', city: 'Delhi', text: 'Fast delivery, authentic product, and the customer service was amazing. My go-to saree store now!', rating: 5, productName: 'Crimson Zari Silk' },
 ];
 
+const HERO_DEFAULTS = {
+  badge: 'NEW COLLECTION 2024',
+  title1: 'Where Every Saree',
+  title2: 'Tells A Story',
+  subtitle: 'Discover handcrafted Banarasi, Kanjivaram, and Chanderi sarees — woven with generations of tradition for the modern woman.',
+  btn1: 'Explore Collection',
+  btn2: 'New Arrivals',
+  stat1Num: '500+', stat1Label: 'Sarees',
+  stat2Num: '10K+', stat2Label: 'Happy Customers',
+  stat3Num: '4.8★', stat3Label: 'Avg Rating',
+};
+
 export default function Home() {
   const navigate = useNavigate();
   const [homeReviews, setHomeReviews] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
+  const [heroText, setHeroText] = useState(HERO_DEFAULTS);
 
   useEffect(() => {
     const real = reviewsDB.getRecent(6).filter(r => r.productId !== '__app__');
     setHomeReviews(real.length >= 3 ? real.slice(0, 3) : FALLBACK_REVIEWS);
+  }, []);
+
+  // Load hero text from Supabase settings
+  useEffect(() => {
+    import('../services/supabase').then(({ settingsAPI }) => {
+      const keys = ['heroBadge','heroTitle1','heroTitle2','heroSubtitle','heroBtn1','heroBtn2','heroStat1Num','heroStat1Label','heroStat2Num','heroStat2Label','heroStat3Num','heroStat3Label'];
+      Promise.all(keys.map(k => settingsAPI.get(k).catch(() => null))).then(vals => {
+        const [badge,title1,title2,subtitle,btn1,btn2,s1n,s1l,s2n,s2l,s3n,s3l] = vals;
+        setHeroText({
+          badge:      badge      || HERO_DEFAULTS.badge,
+          title1:     title1     || HERO_DEFAULTS.title1,
+          title2:     title2     || HERO_DEFAULTS.title2,
+          subtitle:   subtitle   || HERO_DEFAULTS.subtitle,
+          btn1:       btn1       || HERO_DEFAULTS.btn1,
+          btn2:       btn2       || HERO_DEFAULTS.btn2,
+          stat1Num:   s1n        || HERO_DEFAULTS.stat1Num,
+          stat1Label: s1l        || HERO_DEFAULTS.stat1Label,
+          stat2Num:   s2n        || HERO_DEFAULTS.stat2Num,
+          stat2Label: s2l        || HERO_DEFAULTS.stat2Label,
+          stat3Num:   s3n        || HERO_DEFAULTS.stat3Num,
+          stat3Label: s3l        || HERO_DEFAULTS.stat3Label,
+        });
+      });
+    });
   }, []);
 
   function normalizeProduct(p) {
@@ -227,48 +264,49 @@ export default function Home() {
           }}>
             {/* Left: Text */}
             <div>
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                background: 'rgba(201,149,108,0.2)', borderRadius: 20,
-                padding: '6px 14px', marginBottom: 20,
-              }}>
-                <span style={{ fontSize: 12 }}>✨</span>
-                <span style={{ color: 'var(--accent)', fontSize: 12, fontWeight: 600, letterSpacing: 1 }}>
-                  NEW COLLECTION 2024
-                </span>
-              </div>
+              {heroText.badge && (
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  background: 'rgba(201,149,108,0.2)', borderRadius: 20,
+                  padding: '6px 14px', marginBottom: 20,
+                }}>
+                  <span style={{ fontSize: 12 }}>✨</span>
+                  <span style={{ color: 'var(--accent)', fontSize: 12, fontWeight: 600, letterSpacing: 1 }}>
+                    {heroText.badge}
+                  </span>
+                </div>
+              )}
 
               <h1 style={{
                 fontFamily: 'var(--font-serif)', fontSize: 'clamp(32px, 4vw, 54px)',
                 fontWeight: 900, color: '#FFFFFF', lineHeight: 1.15, marginBottom: 16,
               }}>
-                Where Every Saree<br />
-                <span style={{ color: 'var(--accent)' }}>Tells A Story</span>
+                {heroText.title1}<br />
+                <span style={{ color: 'var(--accent)' }}>{heroText.title2}</span>
               </h1>
 
               <p style={{ color: '#A0B080', fontSize: 15, lineHeight: 1.7, marginBottom: 32, maxWidth: 420 }}>
-                Discover handcrafted Banarasi, Kanjivaram, and Chanderi sarees
-                — woven with generations of tradition for the modern woman.
+                {heroText.subtitle}
               </p>
 
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 <button onClick={() => navigate('/catalog')} className="btn btn-accent btn-lg">
-                  Explore Collection
+                  {heroText.btn1 || 'Explore Collection'}
                 </button>
                 <button onClick={() => navigate('/catalog?filter=new')}
                   className="btn btn-outline btn-lg"
                   style={{ color: 'var(--accent-light)', borderColor: 'var(--accent-light)' }}>
-                  New Arrivals
+                  {heroText.btn2 || 'New Arrivals'}
                 </button>
               </div>
 
               {/* Stats */}
               <div style={{ display: 'flex', gap: 32, marginTop: 40, flexWrap: 'wrap' }}>
                 {[
-                  { num: '500+', label: 'Sarees' },
-                  { num: '10K+', label: 'Happy Customers' },
-                  { num: '4.8★', label: 'Avg Rating' },
-                ].map(stat => (
+                  { num: heroText.stat1Num, label: heroText.stat1Label },
+                  { num: heroText.stat2Num, label: heroText.stat2Label },
+                  { num: heroText.stat3Num, label: heroText.stat3Label },
+                ].filter(s => s.num).map(stat => (
                   <div key={stat.label}>
                     <div style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 800, color: 'var(--accent)' }}>
                       {stat.num}
