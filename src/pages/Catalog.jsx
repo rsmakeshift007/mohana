@@ -190,7 +190,7 @@ export default function Catalog() {
     }
 
     return list;
-  }, [searchQuery, filterType, selectedOccasion, selectedFabric, selectedPrice, showInStock, sortBy]);
+  }, [products, searchQuery, filterType, selectedOccasion, selectedFabric, selectedPrice, showInStock, sortBy]);
 
   function clearFilters() {
     setSelectedOccasion('All');
