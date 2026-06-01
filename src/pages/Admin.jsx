@@ -329,7 +329,7 @@ function ProductForm({ onSave, onCancel, editProduct }) {
         {onCancel && <button onClick={onCancel} style={{ fontSize: 13, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}>✕ Cancel</button>}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <div className="product-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
 
         {/* Left column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -354,8 +354,8 @@ function ProductForm({ onSave, onCancel, editProduct }) {
 
           {/* Occasion — multi-select chips */}
           <div>
-            <label style={labelSt}>OCCASION * <span style={{ fontWeight: 400, color: 'var(--accent)', textTransform: 'none', letterSpacing: 0 }}>(multiple select kar sakte ho)</span></label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: '10px 12px', border: '1.5px solid var(--border)', borderRadius: 8, background: 'var(--bg)', minHeight: 44 }}>
+            <label style={labelSt}>OCCASION * <span style={{ fontWeight: 400, color: 'var(--accent)', textTransform: 'none', letterSpacing: 0 }}>(select multiple)</span></label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: '10px 12px', border: '1.5px solid var(--border)', borderRadius: 8, background: 'var(--bg)', minHeight: 44, maxHeight: 'none' }}>
               {occasions.map(o => {
                 const selected = (form.occasions || []).includes(o);
                 return (
@@ -702,6 +702,11 @@ function ProductForm({ onSave, onCancel, editProduct }) {
           </div>
         )}
       </div>
+      <style>{`
+        @media (max-width: 768px) {
+          .product-form-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   );
 }
@@ -3517,15 +3522,6 @@ export default function Admin() {
           ))}
         </nav>
 
-        {/* Backend status badge */}
-        {sidebarOpen && (
-          <div style={{ padding: '8px 16px', margin: '0 12px 8px', borderRadius: 8, background: backendStatus === 'online' ? 'rgba(46,125,50,0.25)' : backendStatus === 'offline' ? 'rgba(198,40,40,0.2)' : 'rgba(255,255,255,0.06)', border: `1px solid ${backendStatus === 'online' ? 'rgba(46,125,50,0.4)' : 'rgba(255,255,255,0.1)'}`, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: backendStatus === 'online' ? '#4CAF50' : backendStatus === 'offline' ? '#EF5350' : '#FFA726', flexShrink: 0 }} />
-            <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: 0.5 }}>
-              {backendStatus === 'online' ? 'Backend Online' : backendStatus === 'offline' ? 'Offline Mode' : 'Connecting...'}
-            </span>
-          </div>
-        )}
 
         {/* Bottom: logout */}
         <div style={{ padding: '12px 0', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
