@@ -186,18 +186,23 @@ export default function ProductDetail() {
               onTouchEnd={handleTouchEnd}
               style={{
                 borderRadius: 'var(--radius-xl)',
-                background: '#000',
+                background: '#f8f4ef',
                 width: '100%',
                 aspectRatio: '3/4',
-                maxHeight: 'min(520px, calc(100vh - 160px))',
+                maxHeight: 'min(540px, calc(100vh - 160px))',
                 position: 'relative', overflow: 'hidden',
                 boxShadow: 'var(--shadow-lg)',
                 cursor: allImages.length > 1 ? 'pointer' : 'default',
                 userSelect: 'none',
               }}>
               {mainImg ? (
-                <img src={mainImg} alt={product.name}
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', zIndex: 1 }} />
+                <>
+                  {/* Soft blurred background fill — no black bars */}
+                  <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${mainImg})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px) brightness(0.6)', transform: 'scale(1.1)', zIndex: 0 }} />
+                  {/* Full saree visible — objectFit contain */}
+                  <img src={mainImg} alt={product.name}
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block', zIndex: 1 }} />
+                </>
               ) : (
                 <>
                   <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 120, opacity: 0.25 }}>🥻</div>
@@ -247,32 +252,33 @@ export default function ProductDetail() {
             {allImages.length > 1 && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
                 {/* Left arrow */}
-                <button onClick={() => setActiveImageIdx(i => Math.max(i - 1, 0))}
+                <button onClick={() => setActiveImageIdx(prev => Math.max(prev - 1, 0))}
                   disabled={activeImageIdx === 0}
-                  style={{ width: 32, height: 32, borderRadius: '50%', border: '1.5px solid var(--border)', background: 'var(--surface-alt)', cursor: activeImageIdx === 0 ? 'not-allowed' : 'pointer', fontSize: 14, flexShrink: 0, opacity: activeImageIdx === 0 ? 0.35 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  style={{ width: 32, height: 32, borderRadius: '50%', border: '1.5px solid var(--border)', background: 'var(--surface-alt)', cursor: activeImageIdx === 0 ? 'not-allowed' : 'pointer', fontSize: 18, fontWeight: 300, flexShrink: 0, opacity: activeImageIdx === 0 ? 0.35 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   ‹
                 </button>
 
                 {/* Thumbnails */}
                 <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2, flex: 1 }}>
-                  {allImages.map((img, i) => (
-                    <div key={i} onClick={() => setActiveImageIdx(i)} style={{
+                  {allImages.map((img, idx) => (
+                    <div key={idx} onClick={() => setActiveImageIdx(idx)} style={{
                       width: 64, height: 72, borderRadius: 8,
-                      border: i === activeImageIdx ? '2.5px solid var(--accent)' : '2px solid var(--border)',
+                      border: idx === activeImageIdx ? '2.5px solid var(--accent)' : '2px solid var(--border)',
                       cursor: 'pointer', overflow: 'hidden', flexShrink: 0,
                       background: '#f0ebe4',
                       transition: 'border-color 0.15s',
+                      boxShadow: idx === activeImageIdx ? '0 2px 8px rgba(0,0,0,0.15)' : 'none',
                     }}>
-                      <img src={img.src} alt={`view ${i + 1}`}
+                      <img src={img.src} alt={`view ${idx + 1}`}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                   ))}
                 </div>
 
                 {/* Right arrow */}
-                <button onClick={() => setActiveImageIdx(i => Math.min(i + 1, allImages.length - 1))}
+                <button onClick={() => setActiveImageIdx(prev => Math.min(prev + 1, allImages.length - 1))}
                   disabled={activeImageIdx === allImages.length - 1}
-                  style={{ width: 32, height: 32, borderRadius: '50%', border: '1.5px solid var(--border)', background: 'var(--surface-alt)', cursor: activeImageIdx === allImages.length - 1 ? 'not-allowed' : 'pointer', fontSize: 14, flexShrink: 0, opacity: activeImageIdx === allImages.length - 1 ? 0.35 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  style={{ width: 32, height: 32, borderRadius: '50%', border: '1.5px solid var(--border)', background: 'var(--surface-alt)', cursor: activeImageIdx === allImages.length - 1 ? 'not-allowed' : 'pointer', fontSize: 18, fontWeight: 300, flexShrink: 0, opacity: activeImageIdx === allImages.length - 1 ? 0.35 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   ›
                 </button>
               </div>
