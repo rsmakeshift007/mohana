@@ -17,6 +17,7 @@ import Admin from './pages/Admin';
 import Login from './pages/Login';
 import AdminLogin from './pages/AdminLogin';
 import LegalPage from './pages/LegalPages';
+import About from './pages/About';
 
 // Pages where we hide Navbar & Footer
 const CLEAN_PAGES = ['/admin-login', '/admin'];
@@ -52,6 +53,7 @@ function AppLayout() {
           </ProtectedAdminRoute>
         } />
         <Route path="/admin-login" element={<AdminLogin />} />
+        <Route path="/about" element={<About />} />
         <Route path="/legal/:page" element={<LegalPage />} />
       </Routes>
       {!isClean && <Footer />}

@@ -125,13 +125,29 @@ export default function Footer() {
             ))}
           </div>
 
+          {/* Company */}
+          <div>
+            <h4 style={{ fontFamily: 'var(--font-serif)', fontSize: 14, fontWeight: 700, marginBottom: 16, color: '#FFFFFF' }}>
+              Company
+            </h4>
+            {[
+              { label: 'About Us', to: '/about' },
+              { label: 'Contact Us', to: '/legal/contact' },
+              { label: 'Track My Order', to: '/orders' },
+            ].map(l => (
+              <Link key={l.to} to={l.to} style={{ display: 'block', color: '#A0B080', fontSize: 13, marginBottom: 8, textDecoration: 'none', transition: 'color 0.2s' }}
+                onMouseEnter={e => e.target.style.color = 'var(--accent)'}
+                onMouseLeave={e => e.target.style.color = '#A0B080'}
+              >{l.label}</Link>
+            ))}
+          </div>
+
           {/* Customer */}
           <div>
             <h4 style={{ fontFamily: 'var(--font-serif)', fontSize: 14, fontWeight: 700, marginBottom: 16, color: '#FFFFFF' }}>
               Customer Care
             </h4>
             {[
-              { label: 'Track My Order', to: '/orders' },
               { label: 'Return & Exchange', to: '/legal/refund' },
               { label: 'Shipping Policy', to: '/legal/shipping' },
               { label: 'Privacy Policy', to: '/legal/privacy' },

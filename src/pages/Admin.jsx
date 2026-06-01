@@ -14,6 +14,7 @@ const NAV = [
   { id: 'banner', icon: '🖼️', label: 'Banner/Reels' },
   { id: 'vendors',       icon: '🏭', label: 'Vendors' },
   { id: 'social-orders', icon: '📱', label: 'Social Orders' },
+  { id: 'about',         icon: '🏛️', label: 'About Us' },
   { id: 'settings',      icon: '⚙️', label: 'Settings' },
   { id: 'legal',         icon: '📜', label: 'Legal Pages' },
 ];
@@ -1742,6 +1743,146 @@ const LEGAL_PAGES = [
   { key: 'shipping', icon: '🚚', label: 'Shipping Policy',       color: '#2E7D32' },
   { key: 'contact',  icon: '💬', label: 'Contact Us',            color: '#C9956C' },
 ];
+
+// ─── About Us Section ────────────────────────
+const ABOUT_FIELDS = [
+  { section: 'Hero',        fields: [
+    { key: 'heroTitle',    label: 'Hero Title',    placeholder: 'Our Story' },
+    { key: 'heroSubtitle', label: 'Hero Subtitle', placeholder: 'Weaving Tradition into Every Thread' },
+    { key: 'heroDesc',     label: 'Hero Description', placeholder: 'Mohanah was born from...', multiline: true },
+  ]},
+  { section: 'Our Story',   fields: [
+    { key: 'storyTitle', label: 'Section Title', placeholder: 'From the Looms of India to Your Doorstep' },
+    { key: 'storyP1',    label: 'Paragraph 1',   placeholder: 'Story paragraph 1...', multiline: true },
+    { key: 'storyP2',    label: 'Paragraph 2',   placeholder: 'Story paragraph 2...', multiline: true },
+    { key: 'storyP3',    label: 'Paragraph 3',   placeholder: 'Story paragraph 3...', multiline: true },
+  ]},
+  { section: 'Values',      fields: [
+    { key: 'value1Icon', label: 'Value 1 Icon',  placeholder: '🤝' },
+    { key: 'value1Title',label: 'Value 1 Title', placeholder: 'Direct from Weavers' },
+    { key: 'value1Desc', label: 'Value 1 Desc',  placeholder: 'We work directly...', multiline: true },
+    { key: 'value2Icon', label: 'Value 2 Icon',  placeholder: '✨' },
+    { key: 'value2Title',label: 'Value 2 Title', placeholder: '100% Authentic' },
+    { key: 'value2Desc', label: 'Value 2 Desc',  placeholder: 'Every saree is handpicked...', multiline: true },
+    { key: 'value3Icon', label: 'Value 3 Icon',  placeholder: '🌿' },
+    { key: 'value3Title',label: 'Value 3 Title', placeholder: 'Sustainable Heritage' },
+    { key: 'value3Desc', label: 'Value 3 Desc',  placeholder: 'We support sustainable...', multiline: true },
+  ]},
+  { section: 'Stats',       fields: [
+    { key: 'stat1Num',   label: 'Stat 1 Number', placeholder: '500+' },
+    { key: 'stat1Label', label: 'Stat 1 Label',  placeholder: 'Sarees Curated' },
+    { key: 'stat2Num',   label: 'Stat 2 Number', placeholder: '50+' },
+    { key: 'stat2Label', label: 'Stat 2 Label',  placeholder: 'Artisan Families' },
+    { key: 'stat3Num',   label: 'Stat 3 Number', placeholder: '10K+' },
+    { key: 'stat3Label', label: 'Stat 3 Label',  placeholder: 'Happy Customers' },
+    { key: 'stat4Num',   label: 'Stat 4 Number', placeholder: '15+' },
+    { key: 'stat4Label', label: 'Stat 4 Label',  placeholder: 'Weaving Traditions' },
+  ]},
+  { section: 'Our Promise', fields: [
+    { key: 'promiseTitle', label: 'Section Title', placeholder: 'The Mohanah Promise' },
+    { key: 'promise1', label: 'Promise 1', placeholder: 'Every saree is handpicked...' },
+    { key: 'promise2', label: 'Promise 2', placeholder: 'Quality checked before dispatch...' },
+    { key: 'promise3', label: 'Promise 3', placeholder: 'Free delivery on orders above ₹2,000.' },
+    { key: 'promise4', label: 'Promise 4', placeholder: '7-day easy returns...' },
+    { key: 'promise5', label: 'Promise 5', placeholder: 'Secure payments...' },
+  ]},
+  { section: 'CTA Banner',  fields: [
+    { key: 'ctaTitle', label: 'CTA Title', placeholder: 'Experience the Art of the Saree' },
+    { key: 'ctaDesc',  label: 'CTA Description', placeholder: 'Explore our curated collection...', multiline: true },
+  ]},
+];
+
+function AboutSection() {
+  const [content, setContent] = useState({});
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    import('../services/supabase').then(({ settingsAPI }) => {
+      const allKeys = ABOUT_FIELDS.flatMap(s => s.fields.map(f => `about_${f.key}`));
+      Promise.all(allKeys.map(k => settingsAPI.get(k).catch(() => null))).then(vals => {
+        const fromDB = {};
+        allKeys.forEach((k, i) => { if (vals[i]) fromDB[k.replace('about_', '')] = vals[i]; });
+        setContent(fromDB);
+      });
+    });
+  }, []);
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const { settingsAPI } = await import('../services/supabase');
+      await Promise.all(
+        Object.entries(content).map(([k, v]) => v != null ? settingsAPI.set(`about_${k}`, v) : Promise.resolve())
+      );
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (e) { alert('Save failed: ' + e.message); }
+    setSaving(false);
+  }
+
+  const inputSt = { width: '100%', padding: '9px 12px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, fontFamily: 'var(--font-sans)', background: 'var(--bg)', outline: 'none', color: 'var(--text)', boxSizing: 'border-box' };
+  const labelSt = { fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1, display: 'block', marginBottom: 5 };
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 900, marginBottom: 4 }}>🏛️ About Us Page</h2>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Edit all content on the About Us page. Changes go live instantly.</p>
+        </div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <a href="/about" target="_blank" style={{ padding: '8px 16px', borderRadius: 8, border: '1.5px solid var(--border)', background: 'var(--surface-alt)', color: 'var(--text)', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>
+            👁 Preview Page →
+          </a>
+          <button onClick={handleSave} disabled={saving} className="btn btn-primary">
+            {saving ? '⏳ Saving...' : saved ? '✅ Saved!' : '💾 Save All Changes'}
+          </button>
+        </div>
+      </div>
+
+      {ABOUT_FIELDS.map(({ section, fields }) => (
+        <div key={section} className="card" style={{ padding: 24, marginBottom: 20 }}>
+          <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 15, marginBottom: 16, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 4, height: 20, background: 'var(--accent)', borderRadius: 2 }} />
+            {section}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: fields.length <= 2 ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
+            {fields.map(({ key, label, placeholder, multiline }) => (
+              <div key={key} style={multiline ? { gridColumn: '1 / -1' } : {}}>
+                <label style={labelSt}>{label.toUpperCase()}</label>
+                {multiline ? (
+                  <textarea
+                    value={content[key] || ''}
+                    onChange={e => setContent(c => ({ ...c, [key]: e.target.value }))}
+                    placeholder={placeholder}
+                    rows={3}
+                    style={{ ...inputSt, resize: 'vertical', lineHeight: 1.6 }}
+                    onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                    onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                  />
+                ) : (
+                  <input
+                    value={content[key] || ''}
+                    onChange={e => setContent(c => ({ ...c, [key]: e.target.value }))}
+                    placeholder={placeholder}
+                    style={inputSt}
+                    onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                    onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <button onClick={handleSave} disabled={saving} className="btn btn-primary btn-lg" style={{ marginTop: 4 }}>
+        {saving ? '⏳ Saving...' : saved ? '✅ All Changes Saved!' : '💾 Save All Changes'}
+      </button>
+    </div>
+  );
+}
 
 function LegalSection() {
   const [pages,       setPages]       = useState(() => legalDB.getAll());
@@ -3522,6 +3663,9 @@ export default function Admin() {
 
         {/* ── Social Orders ── */}
         {activeSection === 'social-orders' && <SocialOrdersSection />}
+
+        {/* ── About Us ── */}
+        {activeSection === 'about' && <AboutSection />}
 
         {/* ── Settings ── */}
         {activeSection === 'settings' && <SettingsSection useBackend={useBackend} />}

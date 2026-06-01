@@ -74,6 +74,7 @@ export default function Navbar() {
             {[
               { label: 'Home', to: '/' },
               { label: 'Catalog', to: '/catalog' },
+              { label: 'About', to: '/about' },
               { label: 'Orders', to: '/orders' },
               { label: 'Profile', to: '/profile' },
             ].map(link => (
@@ -229,6 +230,7 @@ export default function Navbar() {
             {[
               { label: '🏠 Home', to: '/' },
               { label: '🥻 Catalog', to: '/catalog' },
+              { label: '🏛️ About Us', to: '/about' },
               { label: '💖 Wishlist', to: '/wishlist' },
               { label: '📦 Orders', to: '/orders' },
               { label: '👤 Profile', to: '/profile' },
