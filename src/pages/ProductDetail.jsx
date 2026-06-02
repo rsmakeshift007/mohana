@@ -332,52 +332,58 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* Color Variants */}
+            {/* Color Variants — only circular images, no text/labels */}
             {product.colorVariants?.length > 0 && (
-              <div style={{ marginTop: 18, paddingTop: 18, borderTop: '1px solid var(--border)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1, textTransform: 'uppercase' }}>Color</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>
-                    {activeVariantIdx === -1
-                      ? product.colorVariants?.[0]?.colorName
-                        ? `${product.colorVariants[0].colorName} (Default)`
-                        : 'Main Color'
-                      : product.colorVariants[activeVariantIdx]?.colorName}
-                  </span>
-                  {activeVariantIdx === -1 && (
-                    <span style={{ fontSize: 10, background: '#E8F5E9', color: '#2E7D32', fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>
-                      ✓ Auto-selected
-                    </span>
-                  )}
-                </div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {/* Main product — show actual saree image */}
-                  {(() => {
-                    const thumb = product.images?.[0]?.src || product.imageUrl || null;
-                    const isActive = activeVariantIdx === -1;
-                    return (
-                      <button onClick={() => { setActiveVariantIdx(-1); setActiveImageIdx(0); }} title={product.colorName || 'Default'}
-                        style={{ width: 54, height: 64, borderRadius: 8, overflow: 'hidden', cursor: 'pointer', padding: 0, border: 'none', outline: isActive ? '3px solid var(--accent)' : '2px solid var(--border)', outlineOffset: 2, background: product.color || '#8B1A1A', flexShrink: 0, transition: 'all 0.15s', boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.2)' : 'none' }}>
-                        {thumb
-                          ? <img src={thumb} alt="Default" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                          : <div style={{ width: '100%', height: '100%', background: product.color || '#8B1A1A' }} />}
-                      </button>
-                    );
-                  })()}
-                  {/* Variants — show each variant's saree image */}
-                  {product.colorVariants.map((v, i) => {
-                    const thumb = v.images?.[0]?.src || null;
-                    const isActive = activeVariantIdx === i;
-                    return (
-                      <button key={v.id||i} onClick={() => { setActiveVariantIdx(i); setActiveImageIdx(0); }} title={v.colorName}
-                        style={{ width: 54, height: 64, borderRadius: 8, overflow: 'hidden', cursor: 'pointer', padding: 0, border: 'none', outline: isActive ? '3px solid var(--accent)' : '2px solid var(--border)', outlineOffset: 2, background: v.colorHex || '#888', flexShrink: 0, transition: 'all 0.15s', boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.2)' : 'none' }}>
-                        {thumb
-                          ? <img src={thumb} alt={v.colorName} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                          : <div style={{ width: '100%', height: '100%', background: v.colorHex || '#888' }} />}
-                      </button>
-                    );
-                  })}
-                </div>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 16 }}>
+                {/* Main product circle */}
+                {(() => {
+                  const thumb = product.images?.[0]?.src || product.imageUrl || null;
+                  const isActive = activeVariantIdx === -1;
+                  return (
+                    <button
+                      onClick={() => { setActiveVariantIdx(-1); setActiveImageIdx(0); }}
+                      title={product.colorName || 'Default'}
+                      style={{
+                        width: 48, height: 48, borderRadius: '50%',
+                        overflow: 'hidden', cursor: 'pointer', padding: 0, border: 'none',
+                        outline: isActive ? '3px solid var(--accent)' : '2px solid transparent',
+                        outlineOffset: 3,
+                        background: product.color || '#8B1A1A',
+                        flexShrink: 0, transition: 'all 0.18s',
+                        boxShadow: isActive ? '0 0 0 5px rgba(201,149,108,0.25)' : '0 1px 4px rgba(0,0,0,0.15)',
+                        transform: isActive ? 'scale(1.08)' : 'scale(1)',
+                      }}>
+                      {thumb
+                        ? <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                        : <div style={{ width: '100%', height: '100%', background: product.color || '#8B1A1A' }} />}
+                    </button>
+                  );
+                })()}
+                {/* Each variant — one circle with its first image */}
+                {product.colorVariants.map((v, i) => {
+                  const thumb = v.images?.[0]?.src || null;
+                  const isActive = activeVariantIdx === i;
+                  return (
+                    <button
+                      key={v.id || i}
+                      onClick={() => { setActiveVariantIdx(i); setActiveImageIdx(0); }}
+                      title={v.colorName}
+                      style={{
+                        width: 48, height: 48, borderRadius: '50%',
+                        overflow: 'hidden', cursor: 'pointer', padding: 0, border: 'none',
+                        outline: isActive ? '3px solid var(--accent)' : '2px solid transparent',
+                        outlineOffset: 3,
+                        background: v.colorHex || '#888',
+                        flexShrink: 0, transition: 'all 0.18s',
+                        boxShadow: isActive ? '0 0 0 5px rgba(201,149,108,0.25)' : '0 1px 4px rgba(0,0,0,0.15)',
+                        transform: isActive ? 'scale(1.08)' : 'scale(1)',
+                      }}>
+                      {thumb
+                        ? <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                        : <div style={{ width: '100%', height: '100%', background: v.colorHex || '#888' }} />}
+                    </button>
+                  );
+                })}
               </div>
             )}
 
