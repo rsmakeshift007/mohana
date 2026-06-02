@@ -129,16 +129,30 @@ export default function ProductDetail() {
   const inCart = items.find(i => i.id === product.id);
   const related = relatedProducts;
 
+  // Build product with selected color variant info for cart/orders
+  function getProductForCart() {
+    const activeVariant = activeVariantIdx >= 0 ? product.colorVariants?.[activeVariantIdx] : null;
+    return {
+      ...product,
+      selectedColorName:  activeVariant ? activeVariant.colorName : (product.colorName || 'Default'),
+      selectedColorHex:   activeVariant ? activeVariant.colorHex  : product.color,
+      selectedColorImage: activeVariant?.images?.[0]?.src || product.images?.[0]?.src || product.imageUrl || '',
+      // Override main image with selected variant image for cart display
+      imageUrl: activeVariant?.images?.[0]?.src || product.images?.[0]?.src || product.imageUrl || '',
+    };
+  }
+
   function handleAddToCart() {
+    const p = getProductForCart();
     for (let i = 0; i < qty; i++) {
-      dispatch({ type: 'ADD_TO_CART', product });
+      dispatch({ type: 'ADD_TO_CART', product: p });
     }
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   }
 
   function handleBuyNow() {
-    dispatch({ type: 'ADD_TO_CART', product });
+    dispatch({ type: 'ADD_TO_CART', product: getProductForCart() });
     navigate('/cart');
   }
 
@@ -319,13 +333,33 @@ export default function ProductDetail() {
                     {activeVariantIdx === -1 ? (product.colorName || 'Default') : product.colorVariants[activeVariantIdx]?.colorName}
                   </span>
                 </div>
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  <button onClick={() => { setActiveVariantIdx(-1); setActiveImageIdx(0); }} title="Default"
-                    style={{ width: 36, height: 36, borderRadius: '50%', background: product.color || '#8B1A1A', border: '3px solid white', outline: activeVariantIdx === -1 ? '2px solid var(--accent)' : '2px solid transparent', cursor: 'pointer', padding: 0, transition: 'all 0.15s' }} />
-                  {product.colorVariants.map((v, i) => (
-                    <button key={v.id||i} onClick={() => { setActiveVariantIdx(i); setActiveImageIdx(0); }} title={v.colorName}
-                      style={{ width: 36, height: 36, borderRadius: '50%', background: v.colorHex || '#888', border: '3px solid white', outline: activeVariantIdx === i ? '2px solid var(--accent)' : '2px solid transparent', cursor: 'pointer', padding: 0, transition: 'all 0.15s' }} />
-                  ))}
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {/* Main product — show actual saree image */}
+                  {(() => {
+                    const thumb = product.images?.[0]?.src || product.imageUrl || null;
+                    const isActive = activeVariantIdx === -1;
+                    return (
+                      <button onClick={() => { setActiveVariantIdx(-1); setActiveImageIdx(0); }} title={product.colorName || 'Default'}
+                        style={{ width: 54, height: 64, borderRadius: 8, overflow: 'hidden', cursor: 'pointer', padding: 0, border: 'none', outline: isActive ? '3px solid var(--accent)' : '2px solid var(--border)', outlineOffset: 2, background: product.color || '#8B1A1A', flexShrink: 0, transition: 'all 0.15s', boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.2)' : 'none' }}>
+                        {thumb
+                          ? <img src={thumb} alt="Default" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                          : <div style={{ width: '100%', height: '100%', background: product.color || '#8B1A1A' }} />}
+                      </button>
+                    );
+                  })()}
+                  {/* Variants — show each variant's saree image */}
+                  {product.colorVariants.map((v, i) => {
+                    const thumb = v.images?.[0]?.src || null;
+                    const isActive = activeVariantIdx === i;
+                    return (
+                      <button key={v.id||i} onClick={() => { setActiveVariantIdx(i); setActiveImageIdx(0); }} title={v.colorName}
+                        style={{ width: 54, height: 64, borderRadius: 8, overflow: 'hidden', cursor: 'pointer', padding: 0, border: 'none', outline: isActive ? '3px solid var(--accent)' : '2px solid var(--border)', outlineOffset: 2, background: v.colorHex || '#888', flexShrink: 0, transition: 'all 0.15s', boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.2)' : 'none' }}>
+                        {thumb
+                          ? <img src={thumb} alt={v.colorName} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                          : <div style={{ width: '100%', height: '100%', background: v.colorHex || '#888' }} />}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}

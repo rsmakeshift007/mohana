@@ -805,7 +805,19 @@ function OrdersSection({ useBackend }) {
 
                 <div style={{ flex: 1, minWidth: 120 }}>
                   <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 14, color: 'var(--text)' }}>{o.product}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{o.id} · {o.date}</div>
+                  {/* Selected Color — admin ko clearly dikhe */}
+                  {o.selectedColorName && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
+                      {o.selectedColorImage
+                        ? <img src={o.selectedColorImage} alt={o.selectedColorName} style={{ width: 20, height: 24, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border)' }} />
+                        : <div style={{ width: 14, height: 14, borderRadius: '50%', background: o.selectedColorHex || '#888', border: '1px solid var(--border)', flexShrink: 0 }} />
+                      }
+                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', background: 'var(--surface-alt)', padding: '1px 7px', borderRadius: 10, border: '1px solid var(--border)' }}>
+                        🎨 {o.selectedColorName}
+                      </span>
+                    </div>
+                  )}
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{o.id} · {o.date}</div>
                   {(o.trackingNumber || o.estimatedDelivery) && (
                     <div style={{ fontSize: 11, color: '#2E7D32', fontWeight: 600, marginTop: 2 }}>
                       {o.trackingNumber && `🚚 ${o.trackingNumber}`}

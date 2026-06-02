@@ -91,6 +91,17 @@ export default function Cart() {
                       {item.name}
                     </div>
                   </Link>
+                  {item.selectedColorName && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
+                      {item.selectedColorImage
+                        ? <img src={item.selectedColorImage} alt={item.selectedColorName} style={{ width: 18, height: 22, objectFit: 'cover', borderRadius: 3, border: '1px solid var(--border)' }} />
+                        : <div style={{ width: 12, height: 12, borderRadius: '50%', background: item.selectedColorHex || '#888', flexShrink: 0 }} />
+                      }
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>
+                        Color: <span style={{ color: 'var(--text)' }}>{item.selectedColorName}</span>
+                      </span>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <span style={{ fontFamily: 'var(--font-serif)', fontSize: 17, fontWeight: 800, color: 'var(--primary)' }}>
                       ₹{item.price.toLocaleString('en-IN')}
