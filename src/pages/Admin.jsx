@@ -430,7 +430,7 @@ function ProductForm({ onSave, onCancel, editProduct }) {
             </div>
           )}
 
-          {/* Region + Color */}
+          {/* Region + Saree Preview */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'end' }}>
             <div>
               <label style={labelSt}>ORIGIN / REGION <span style={{ fontWeight: 400, textTransform: 'none', fontSize: 10, color: 'var(--text-muted)' }}>(optional)</span></label>
@@ -438,6 +438,16 @@ function ProductForm({ onSave, onCancel, editProduct }) {
                 placeholder="e.g. Varanasi, Kanchipuram (leave blank to hide)" style={inputSt}
                 onFocus={e => e.target.style.borderColor = 'var(--accent)'}
                 onBlur={e => e.target.style.borderColor = 'var(--border)'} />
+            </div>
+            {/* Saree thumbnail preview */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <label style={{ ...labelSt, textAlign: 'center' }}>PREVIEW</label>
+              <div style={{ width: 52, height: 52, borderRadius: '50%', overflow: 'hidden', border: '2px solid var(--border)', background: '#f0ebe4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {images[0]?.src
+                  ? <img src={images[0].src} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <span style={{ fontSize: 22, opacity: 0.4 }}>🥻</span>
+                }
+              </div>
             </div>
           </div>
 
