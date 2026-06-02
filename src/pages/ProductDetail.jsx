@@ -332,59 +332,7 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* Variants — tiny circular saree images only, no color at all */}
-            {product.colorVariants?.length > 0 && (
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 16 }}>
-
-                {/* Main product circle — saree image only */}
-                {(() => {
-                  const thumb = product.images?.[0]?.src || product.imageUrl || null;
-                  const isActive = activeVariantIdx === -1;
-                  return (
-                    <button onClick={() => { setActiveVariantIdx(-1); setActiveImageIdx(0); }}
-                      style={{
-                        width: 48, height: 48, borderRadius: '50%',
-                        overflow: 'hidden', cursor: 'pointer', padding: 0, border: 'none',
-                        background: '#f0ebe4',
-                        outline: isActive ? '3px solid var(--accent)' : '2px solid #E0D9D0',
-                        outlineOffset: 3,
-                        flexShrink: 0, transition: 'all 0.18s',
-                        boxShadow: isActive ? '0 0 0 5px rgba(201,149,108,0.2)' : '0 1px 3px rgba(0,0,0,0.1)',
-                        transform: isActive ? 'scale(1.1)' : 'scale(1)',
-                      }}>
-                      {thumb
-                        ? <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                        : <span style={{ fontSize: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>🥻</span>}
-                    </button>
-                  );
-                })()}
-
-                {/* Each variant — one tiny circle with saree image */}
-                {product.colorVariants.map((v, i) => {
-                  const thumb = v.images?.[0]?.src || null;
-                  const isActive = activeVariantIdx === i;
-                  return (
-                    <button key={v.id || i}
-                      onClick={() => { setActiveVariantIdx(i); setActiveImageIdx(0); }}
-                      style={{
-                        width: 48, height: 48, borderRadius: '50%',
-                        overflow: 'hidden', cursor: 'pointer', padding: 0, border: 'none',
-                        background: '#f0ebe4',
-                        outline: isActive ? '3px solid var(--accent)' : '2px solid #E0D9D0',
-                        outlineOffset: 3,
-                        flexShrink: 0, transition: 'all 0.18s',
-                        boxShadow: isActive ? '0 0 0 5px rgba(201,149,108,0.2)' : '0 1px 3px rgba(0,0,0,0.1)',
-                        transform: isActive ? 'scale(1.1)' : 'scale(1)',
-                      }}>
-                      {thumb
-                        ? <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                        : <span style={{ fontSize: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>🥻</span>}
-                    </button>
-                  );
-                })}
-
-              </div>
-            )}
+            {/* Color variant selection removed — images shown in main gallery above */}
 
             {/* Product details pills */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 18, paddingTop: 18, borderTop: product.colorVariants?.length > 0 ? '1px solid var(--border)' : 'none' }}>
