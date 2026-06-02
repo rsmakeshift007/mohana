@@ -329,6 +329,34 @@ function ProductForm({ onSave, onCancel, editProduct }) {
         {onCancel && <button onClick={onCancel} style={{ fontSize: 13, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}>✕ Cancel</button>}
       </div>
 
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+      {/* Occasion — FULL WIDTH at top so all chips visible */}
+      <div>
+        <label style={labelSt}>OCCASION * <span style={{ fontWeight: 400, color: 'var(--accent)', textTransform: 'none', letterSpacing: 0 }}>(select multiple)</span></label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: '12px', border: '1.5px solid var(--border)', borderRadius: 8, background: 'var(--bg)' }}>
+          {occasions.map(o => {
+            const selected = (form.occasions || []).includes(o);
+            return (
+              <button key={o} type="button"
+                onClick={() => setForm(f => {
+                  const cur = f.occasions || [];
+                  const next = cur.includes(o) ? cur.filter(x => x !== o) : [...cur, o];
+                  return { ...f, occasions: next.length ? next : [o] };
+                })}
+                style={{ padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none', fontFamily: 'var(--font-sans)', background: selected ? 'var(--primary)' : 'var(--surface-alt)', color: selected ? 'var(--accent-light)' : 'var(--text-sec)', boxShadow: selected ? '0 2px 6px rgba(62,74,44,0.25)' : 'none', transition: 'all 0.18s' }}>
+                {selected ? '✓ ' : ''}{o}
+              </button>
+            );
+          })}
+        </div>
+        {(form.occasions || []).length > 0 && (
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Selected: {form.occasions.join(', ')}</div>
+        )}
+      </div>
+
+      </div>
+
       <div className="product-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
 
         {/* Left column */}
@@ -352,34 +380,19 @@ function ProductForm({ onSave, onCancel, editProduct }) {
             </select>
           </div>
 
-          {/* Occasion — multi-select chips */}
-          <div>
-            <label style={labelSt}>OCCASION * <span style={{ fontWeight: 400, color: 'var(--accent)', textTransform: 'none', letterSpacing: 0 }}>(select multiple)</span></label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: '10px 12px', border: '1.5px solid var(--border)', borderRadius: 8, background: 'var(--bg)', minHeight: 44, maxHeight: 'none' }}>
+          {/* Occasion moved to full-width section above */}
+          <div style={{ display: 'none' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {occasions.map(o => {
                 const selected = (form.occasions || []).includes(o);
                 return (
-                  <button
-                    key={o}
-                    type="button"
-                    onClick={() => {
-                      setForm(f => {
-                        const cur = f.occasions || [];
-                        const next = cur.includes(o)
-                          ? cur.filter(x => x !== o)
-                          : [...cur, o];
-                        return { ...f, occasions: next.length ? next : [o] };
-                      });
-                    }}
-                    style={{
-                      padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700,
-                      cursor: 'pointer', border: 'none', fontFamily: 'var(--font-sans)',
-                      background: selected ? 'var(--primary)' : 'var(--surface-alt)',
-                      color: selected ? 'var(--accent-light)' : 'var(--text-sec)',
-                      boxShadow: selected ? '0 2px 6px rgba(62,74,44,0.25)' : 'none',
-                      transition: 'all 0.18s',
-                    }}
-                  >
+                  <button key={o} type="button"
+                    onClick={() => setForm(f => {
+                      const cur = f.occasions || [];
+                      const next = cur.includes(o) ? cur.filter(x => x !== o) : [...cur, o];
+                      return { ...f, occasions: next.length ? next : [o] };
+                    })}
+                    style={{ padding: '4px 12px', borderRadius: 20, fontSize: 12 }}>
                     {selected ? '✓ ' : ''}{o}
                   </button>
                 );
@@ -3354,27 +3367,31 @@ function CustomersSection() {
 export default function Admin() {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('dashboard');
-  const [productList, setProductList] = useState(() => productsDB.getAll());
+  const [productList, setProductList] = useState([]);
   const [editProduct, setEditProduct] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [useBackend, setUseBackend] = useState(false);
   const [stats, setStats] = useState(() => getDBStats());
-  const [backendStatus, setBackendStatus] = useState('checking'); // 'checking' | 'online' | 'offline'
+  const [backendStatus, setBackendStatus] = useState('checking');
 
-  // Check backend on mount + load products
+  // Load products from Supabase on mount — works on ALL devices
   useEffect(() => {
-    isBackendAvailable().then(available => {
-      setUseBackend(available);
-      setBackendStatus(available ? 'online' : 'offline');
-      if (available) {
-        productsAPI.getAll()
-          .then(data => { setProductList(data); })
-          .catch(() => { setProductList(productsDB.getAll()); });
-        getAPIStats()
-          .then(s => setStats(s))
-          .catch(() => setStats(getDBStats()));
-      }
-    });
+    setBackendStatus('online');
+    supabaseProductsAPI.getAll()
+      .then(data => {
+        if (data && data.length > 0) {
+          setProductList(data.map(normalizeAdminProduct));
+        } else {
+          // Supabase empty — try localStorage as last resort
+          const local = productsDB.getAll();
+          if (local.length > 0) setProductList(local);
+        }
+      })
+      .catch(() => {
+        // Fallback to localStorage if Supabase fails
+        setProductList(productsDB.getAll());
+        setBackendStatus('offline');
+      });
   }, []);
 
   function normalizeAdminProduct(p) {
