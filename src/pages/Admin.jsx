@@ -3006,14 +3006,11 @@ function AdminPasswordChanger() {
   const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [show, setShow] = useState({ cur: false, new: false, con: false });
   const [msg, setMsg] = useState({ text: '', error: false });
+  const [loading, setLoading] = useState(false);
 
-  function handleChange() {
-    const creds = getAdminCreds();
+  async function handleChange() {
     if (!form.currentPassword || !form.newPassword || !form.confirmPassword) {
       setMsg({ text: 'All fields are required.', error: true }); return;
-    }
-    if (form.currentPassword !== creds.password) {
-      setMsg({ text: 'Current password is incorrect.', error: true }); return;
     }
     if (form.newPassword.length < 8) {
       setMsg({ text: 'New password must be at least 8 characters.', error: true }); return;
@@ -3021,10 +3018,42 @@ function AdminPasswordChanger() {
     if (form.newPassword !== form.confirmPassword) {
       setMsg({ text: 'New passwords do not match.', error: true }); return;
     }
-    localStorage.setItem(ADMIN_CREDS_KEY, JSON.stringify({ ...creds, password: form.newPassword }));
-    setForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    setMsg({ text: '✅ Password changed successfully!', error: false });
-    setTimeout(() => setMsg({ text: '', error: false }), 4000);
+
+    setLoading(true);
+    try {
+      const { supabase } = await import('../services/supabase');
+
+      // Step 1: Verify current password by re-authenticating
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: form.currentPassword,
+      });
+      if (signInError) {
+        setMsg({ text: '❌ Current password is incorrect.', error: true });
+        setLoading(false); return;
+      }
+
+      // Step 2: Update password in Supabase Auth
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: form.newPassword,
+      });
+      if (updateError) {
+        setMsg({ text: '❌ Failed: ' + updateError.message, error: true });
+        setLoading(false); return;
+      }
+
+      // Step 3: Also update localStorage for backward compat
+      const creds = getAdminCreds();
+      localStorage.setItem(ADMIN_CREDS_KEY, JSON.stringify({ ...creds, password: form.newPassword }));
+
+      setForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setMsg({ text: '✅ Password changed successfully! Use new password next time you login.', error: false });
+      setTimeout(() => setMsg({ text: '', error: false }), 5000);
+    } catch (err) {
+      setMsg({ text: '❌ Error: ' + err.message, error: true });
+    }
+    setLoading(false);
   }
 
   const inputSt = { width: '100%', padding: '10px 13px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, fontFamily: 'var(--font-sans)', background: 'var(--bg)', outline: 'none', color: 'var(--text)', boxSizing: 'border-box' };
@@ -3062,8 +3091,8 @@ function AdminPasswordChanger() {
             {msg.text}
           </div>
         )}
-        <button onClick={handleChange} className="btn btn-primary" style={{ alignSelf: 'flex-start', marginTop: 4 }}>
-          🔑 Update Password
+        <button onClick={handleChange} disabled={loading} className="btn btn-primary" style={{ alignSelf: 'flex-start', marginTop: 4 }}>
+          {loading ? '⏳ Updating...' : '🔑 Update Password'}
         </button>
       </div>
     </div>
