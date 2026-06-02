@@ -130,15 +130,22 @@ export default function ProductDetail() {
   const related = relatedProducts;
 
   // Build product with selected color variant info for cart/orders
+  // If no color selected → auto-use main product (first/default)
   function getProductForCart() {
     const activeVariant = activeVariantIdx >= 0 ? product.colorVariants?.[activeVariantIdx] : null;
+    const hasVariants = product.colorVariants?.length > 0;
+
+    // Get the color name — if main product selected, use first variant label or product name
+    const defaultColorName = hasVariants
+      ? `${product.name} (Main Color)`
+      : null; // no variants → don't show color info at all
+
     return {
       ...product,
-      selectedColorName:  activeVariant ? activeVariant.colorName : (product.colorName || 'Default'),
+      selectedColorName:  activeVariant ? activeVariant.colorName : defaultColorName,
       selectedColorHex:   activeVariant ? activeVariant.colorHex  : product.color,
       selectedColorImage: activeVariant?.images?.[0]?.src || product.images?.[0]?.src || product.imageUrl || '',
-      // Override main image with selected variant image for cart display
-      imageUrl: activeVariant?.images?.[0]?.src || product.images?.[0]?.src || product.imageUrl || '',
+      imageUrl:           activeVariant?.images?.[0]?.src || product.images?.[0]?.src || product.imageUrl || '',
     };
   }
 
@@ -328,10 +335,20 @@ export default function ProductDetail() {
             {/* Color Variants */}
             {product.colorVariants?.length > 0 && (
               <div style={{ marginTop: 18, paddingTop: 18, borderTop: '1px solid var(--border)' }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1, marginBottom: 10, textTransform: 'uppercase' }}>
-                  Color — <span style={{ color: 'var(--text)', textTransform: 'none', letterSpacing: 0 }}>
-                    {activeVariantIdx === -1 ? (product.colorName || 'Default') : product.colorVariants[activeVariantIdx]?.colorName}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1, textTransform: 'uppercase' }}>Color</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>
+                    {activeVariantIdx === -1
+                      ? product.colorVariants?.[0]?.colorName
+                        ? `${product.colorVariants[0].colorName} (Default)`
+                        : 'Main Color'
+                      : product.colorVariants[activeVariantIdx]?.colorName}
                   </span>
+                  {activeVariantIdx === -1 && (
+                    <span style={{ fontSize: 10, background: '#E8F5E9', color: '#2E7D32', fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>
+                      ✓ Auto-selected
+                    </span>
+                  )}
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {/* Main product — show actual saree image */}
