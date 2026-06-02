@@ -95,7 +95,7 @@ export default function AdminLogin() {
                 type="email"
                 value={credentials.username}
                 onChange={e => setCredentials(c => ({ ...c, username: e.target.value }))}
-                placeholder="admin@mohanah.com"
+                placeholder="Enter email address"
                 style={{
                   width: '100%', padding: '12px 14px',
                   borderRadius: 'var(--radius-md)',

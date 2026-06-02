@@ -2999,7 +2999,7 @@ function FaqManager() {
 // ─── Admin Password Changer ──────────────────
 const ADMIN_CREDS_KEY = 'mohanah_admin_creds';
 function getAdminCreds() {
-  try { return JSON.parse(localStorage.getItem(ADMIN_CREDS_KEY)) || { email: 'admin@mohanah.com', password: 'mohanah@2024' }; } catch { return { email: 'admin@mohanah.com', password: 'mohanah@2024' }; }
+  try { return JSON.parse(localStorage.getItem(ADMIN_CREDS_KEY)) || { email: '', password: '' }; } catch { return { email: '', password: '' }; }
 }
 
 function AdminPasswordChanger() {
