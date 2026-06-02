@@ -15,6 +15,107 @@ function saveAddresses(uid, list) {
 
 const BLANK_ADDR = { name: '', phone: '', line1: '', line2: '', city: '', district: '', state: '', pincode: '', isDefault: false };
 
+function ChangePasswordSection() {
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({ current: '', newPass: '', confirm: '' });
+  const [show, setShow] = useState({ cur: false, new: false, con: false });
+  const [msg, setMsg] = useState({ text: '', error: false });
+  const [loading, setLoading] = useState(false);
+
+  async function handleChange() {
+    if (!form.current || !form.newPass || !form.confirm) {
+      setMsg({ text: 'All fields are required.', error: true }); return;
+    }
+    if (form.newPass.length < 8) {
+      setMsg({ text: 'New password must be at least 8 characters.', error: true }); return;
+    }
+    if (form.newPass !== form.confirm) {
+      setMsg({ text: 'Passwords do not match.', error: true }); return;
+    }
+    setLoading(true);
+    try {
+      const { supabase } = await import('../services/supabase');
+      // Verify current password
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error: signInErr } = await supabase.auth.signInWithPassword({
+        email: user.email, password: form.current,
+      });
+      if (signInErr) {
+        setMsg({ text: '❌ Current password is incorrect.', error: true });
+        setLoading(false); return;
+      }
+      // Update password in Supabase Auth
+      const { error: updateErr } = await supabase.auth.updateUser({ password: form.newPass });
+      if (updateErr) {
+        setMsg({ text: '❌ ' + updateErr.message, error: true });
+        setLoading(false); return;
+      }
+      setForm({ current: '', newPass: '', confirm: '' });
+      setMsg({ text: '✅ Password changed successfully!', error: false });
+      setTimeout(() => { setMsg({ text: '', error: false }); setOpen(false); }, 3000);
+    } catch (err) {
+      setMsg({ text: '❌ ' + err.message, error: true });
+    }
+    setLoading(false);
+  }
+
+  const inp = { width: '100%', padding: '10px 40px 10px 12px', borderRadius: 10, border: '1.5px solid var(--border)', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'var(--font-sans)', background: 'var(--bg)' };
+
+  return (
+    <div className="card" style={{ padding: 20, marginBottom: 16 }}>
+      <button onClick={() => setOpen(o => !o)}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 20 }}>🔐</span>
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>Change Password</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Update your account password</div>
+          </div>
+        </div>
+        <span style={{ color: 'var(--text-muted)', fontSize: 18 }}>{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {[
+            { label: 'Current Password', key: 'current', vis: show.cur, toggle: () => setShow(s => ({ ...s, cur: !s.cur })) },
+            { label: 'New Password', key: 'newPass', vis: show.new, toggle: () => setShow(s => ({ ...s, new: !s.new })) },
+            { label: 'Confirm New Password', key: 'confirm', vis: show.con, toggle: () => setShow(s => ({ ...s, con: !s.con })) },
+          ].map(({ label, key, vis, toggle }) => (
+            <div key={key}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 0.5, display: 'block', marginBottom: 4 }}>
+                {label.toUpperCase()}
+              </label>
+              <div style={{ position: 'relative' }}>
+                <input type={vis ? 'text' : 'password'} value={form[key]}
+                  onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                  style={inp}
+                  onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                  onBlur={e => e.target.style.borderColor = 'var(--border)'} />
+                <button type="button" onClick={toggle}
+                  style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14 }}>
+                  {vis ? '🙈' : '👁️'}
+                </button>
+              </div>
+            </div>
+          ))}
+
+          {msg.text && (
+            <div style={{ fontSize: 13, fontWeight: 600, padding: '8px 12px', borderRadius: 8, color: msg.error ? '#c62828' : '#2e7d32', background: msg.error ? '#ffebee' : '#e8f5e9' }}>
+              {msg.text}
+            </div>
+          )}
+
+          <button onClick={handleChange} disabled={loading}
+            style={{ padding: '11px 24px', borderRadius: 10, border: 'none', background: 'var(--primary)', color: 'var(--accent-light)', fontWeight: 700, fontSize: 13, cursor: loading ? 'not-allowed' : 'pointer', alignSelf: 'flex-start' }}>
+            {loading ? '⏳ Updating...' : '🔑 Update Password'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Profile() {
   const { cartCount, wishlist } = useCart();
   const { user, isLoggedIn, signOut } = useAuth();
@@ -305,6 +406,9 @@ export default function Profile() {
             ))}
           </div>
         ))}
+
+        {/* Change Password */}
+        {isLoggedIn && <ChangePasswordSection />}
 
         {/* Logout */}
         {isLoggedIn ? (
