@@ -439,14 +439,6 @@ function ProductForm({ onSave, onCancel, editProduct }) {
                 onFocus={e => e.target.style.borderColor = 'var(--accent)'}
                 onBlur={e => e.target.style.borderColor = 'var(--border)'} />
             </div>
-            <div>
-              <label style={labelSt}>COLOR</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input type="color" value={form.color} onChange={e => setForm(f => ({ ...f, color: e.target.value }))}
-                  style={{ width: 44, height: 44, borderRadius: 8, border: '1.5px solid var(--border)', cursor: 'pointer', padding: 2 }} />
-                <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'monospace' }}>{form.color}</span>
-              </div>
-            </div>
           </div>
 
           {/* Description */}
@@ -531,111 +523,6 @@ function ProductForm({ onSave, onCancel, editProduct }) {
               <div style={{ marginTop: 6, fontSize: 11, color: 'var(--text-muted)' }}>
                 No vendors added yet. Go to <strong>Vendors</strong> section to add them.
               </div>
-            )}
-          </div>
-
-          {/* ── Color Variants ── */}
-          <div style={{ background: '#F3E5F5', border: '1.5px dashed #9C27B0', borderRadius: 12, padding: '14px 16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <div>
-                <div style={{ fontWeight: 800, fontSize: 13, color: '#6A1B9A' }}>🎨 COLOR VARIANTS</div>
-                <div style={{ fontSize: 11, color: '#9C27B0', marginTop: 2 }}>Same saree in different colors — customers can click swatches to switch</div>
-              </div>
-              <button type="button" onClick={() => setShowVariantForm(v => !v)}
-                style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: '#9C27B0', color: 'white', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
-                {showVariantForm ? '✕ Cancel' : '+ Add Color'}
-              </button>
-            </div>
-
-            {/* Existing variants list */}
-            {colorVariants.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
-                {colorVariants.map((v, idx) => (
-                  <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'white', borderRadius: 10, padding: '10px 12px', border: '1px solid #CE93D8' }}>
-                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: v.colorHex, border: '2px solid white', boxShadow: '0 0 0 2px #9C27B0', flexShrink: 0 }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 700, fontSize: 13 }}>{v.colorName}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{v.images?.length || 0} photo{v.images?.length !== 1 ? 's' : ''}</div>
-                    </div>
-                    {/* Mini thumbnails */}
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      {(v.images || []).slice(0, 3).map((img, i) => (
-                        <img key={i} src={img.src} alt="" style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 6 }} />
-                      ))}
-                    </div>
-                    <button type="button" onClick={() => setColorVariants(prev => prev.filter((_, i) => i !== idx))}
-                      style={{ width: 26, height: 26, borderRadius: '50%', background: '#FFEBEE', border: 'none', cursor: 'pointer', color: '#C62828', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Add new variant form */}
-            {showVariantForm && (
-              <div style={{ background: 'white', borderRadius: 10, padding: '14px', border: '1px solid #CE93D8', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: 10, fontWeight: 700, color: '#6A1B9A', letterSpacing: 1, display: 'block', marginBottom: 4 }}>COLOR NAME *</label>
-                    <input value={newVariant.colorName} onChange={e => setNewVariant(v => ({ ...v, colorName: e.target.value }))}
-                      placeholder="e.g. Bottle Green, Royal Blue"
-                      style={{ width: '100%', padding: '8px 10px', borderRadius: 7, border: '1.5px solid #CE93D8', fontSize: 12, outline: 'none', boxSizing: 'border-box' }} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 10, fontWeight: 700, color: '#6A1B9A', letterSpacing: 1, display: 'block', marginBottom: 4 }}>COLOR</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <input type="color" value={newVariant.colorHex} onChange={e => setNewVariant(v => ({ ...v, colorHex: e.target.value }))}
-                        style={{ width: 44, height: 36, borderRadius: 7, border: '1.5px solid #CE93D8', cursor: 'pointer', padding: 2 }} />
-                      <div style={{ width: 32, height: 32, borderRadius: '50%', background: newVariant.colorHex, border: '2px solid #CE93D8' }} />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Image upload for this variant */}
-                <div>
-                  <label style={{ fontSize: 10, fontWeight: 700, color: '#6A1B9A', letterSpacing: 1, display: 'block', marginBottom: 6 }}>PHOTOS FOR THIS COLOR</label>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    {(newVariant.images || []).map((img, i) => (
-                      <div key={img.id} style={{ position: 'relative', width: 64, height: 64, borderRadius: 8, overflow: 'hidden' }}>
-                        <img src={img.src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        <button type="button" onClick={() => setNewVariant(v => ({ ...v, images: v.images.filter(x => x.id !== img.id) }))}
-                          style={{ position: 'absolute', top: 2, right: 2, width: 18, height: 18, borderRadius: '50%', background: 'rgba(198,40,40,0.9)', border: 'none', color: 'white', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
-                      </div>
-                    ))}
-                    <label style={{ width: 64, height: 64, borderRadius: 8, border: '2px dashed #CE93D8', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: '#FAF5FF', fontSize: 10, color: '#9C27B0', fontWeight: 700, gap: 2 }}>
-                      <span style={{ fontSize: 20 }}>📷</span>ADD
-                      <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => {
-                        const files = Array.from(e.target.files);
-                        files.forEach(file => {
-                          const reader = new FileReader();
-                          reader.onload = ev => {
-                            setNewVariant(v => ({ ...v, images: [...v.images, { id: Date.now() + Math.random(), src: ev.target.result, name: file.name, file }] }));
-                          };
-                          reader.readAsDataURL(file);
-                        });
-                        e.target.value = '';
-                      }} />
-                    </label>
-                  </div>
-                </div>
-
-                <button type="button"
-                  disabled={!newVariant.colorName.trim()}
-                  onClick={() => {
-                    if (!newVariant.colorName.trim()) return;
-                    setColorVariants(prev => [...prev, { ...newVariant, id: Date.now() + '' }]);
-                    setNewVariant({ colorName: '', colorHex: '#8B1A1A', images: [] });
-                    setShowVariantForm(false);
-                  }}
-                  style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: newVariant.colorName.trim() ? '#9C27B0' : '#DDD', color: newVariant.colorName.trim() ? 'white' : '#999', fontWeight: 700, fontSize: 13, cursor: newVariant.colorName.trim() ? 'pointer' : 'not-allowed', alignSelf: 'flex-start' }}>
-                  ✓ Save This Color
-                </button>
-              </div>
-            )}
-
-            {colorVariants.length === 0 && !showVariantForm && (
-              <div style={{ fontSize: 11, color: '#9C27B0', opacity: 0.7 }}>No variants added yet. Click "+ Add Color" to add same saree in different colors.</div>
             )}
           </div>
 
