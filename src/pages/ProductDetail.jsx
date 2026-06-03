@@ -229,6 +229,11 @@ export default function ProductDetail() {
                   className="product-image-container"
                   onTouchStart={handleTouchStart}
                   onTouchEnd={handleTouchEnd}
+                  onClick={() => {
+                    if (allImages.length > 1) {
+                      setActiveImageIdx(prev => (prev + 1) % allImages.length);
+                    }
+                  }}
                   style={{
                     borderRadius: 16,
                     background: '#FAFAF8',
@@ -332,7 +337,31 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* Color variant selection removed — images shown in main gallery above */}
+            {/* Variant thumbnails — small circles, click to switch variant */}
+            {product.colorVariants?.some(v => v.images?.length > 0) && (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
+                {/* Main product */}
+                {(product.images?.[0]?.src || product.imageUrl) && (
+                  <button onClick={() => { setActiveVariantIdx(-1); setActiveImageIdx(0); }}
+                    title="Main"
+                    style={{ width: 44, height: 44, borderRadius: '50%', overflow: 'hidden', padding: 0, border: 'none', background: '#f0ebe4', outline: activeVariantIdx === -1 ? '3px solid var(--accent)' : '2px solid #E0D9D0', outlineOffset: 2, cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s', transform: activeVariantIdx === -1 ? 'scale(1.12)' : 'scale(1)' }}>
+                    <img src={product.images?.[0]?.src || product.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </button>
+                )}
+                {/* Each variant */}
+                {product.colorVariants.filter(v => v.images?.length > 0).map((v, i) => {
+                  const realIdx = product.colorVariants.indexOf(v);
+                  const isActive = activeVariantIdx === realIdx;
+                  return (
+                    <button key={v.id || i} onClick={() => { setActiveVariantIdx(realIdx); setActiveImageIdx(0); }}
+                      title={v.colorName}
+                      style={{ width: 44, height: 44, borderRadius: '50%', overflow: 'hidden', padding: 0, border: 'none', background: '#f0ebe4', outline: isActive ? '3px solid var(--accent)' : '2px solid #E0D9D0', outlineOffset: 2, cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s', transform: isActive ? 'scale(1.12)' : 'scale(1)' }}>
+                      <img src={v.images[0].src} alt={v.colorName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Product details pills */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 18, paddingTop: 18, borderTop: product.colorVariants?.length > 0 ? '1px solid var(--border)' : 'none' }}>
