@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase, authAPI, bannersAPI, reelsAPI, storageAPI, productsAPI as supabaseProductsAPI, categoriesAPI as supabaseCategoriesAPI, ordersAPI as supabaseOrdersAPI, reviewsAPI } from '../services/supabase';
+import { supabase, authAPI, bannersAPI, reelsAPI, storageAPI, productsAPI as supabaseProductsAPI, categoriesAPI as supabaseCategoriesAPI, ordersAPI as supabaseOrdersAPI, reviewsAPI, vendorsAPI as supabaseVendorsAPI } from '../services/supabase';
 import { productsDB, ordersDB, customersDB, settingsDB, getDBStats, bannerDB, legalDB, vendorDB, manualOrdersDB, categoriesDB, faqsDB } from '../services/db';
 import { productsAPI, ordersAPI, customersAPI, settingsAPI, getAPIStats, isBackendAvailable } from '../services/api';
 
@@ -212,16 +212,11 @@ function ProductForm({ onSave, onCancel, editProduct }) {
   );
   const [showVariantForm, setShowVariantForm] = useState(false);
   const [newVariant, setNewVariant] = useState({ colorName: '', colorHex: '#8B1A1A', images: [] });
-  const [vendors, setVendors] = useState(() => vendorDB.getAll().filter(v => v.active !== false));
-  // Refresh vendor list when localStorage changes (e.g., admin just added a new vendor)
+  const [vendors, setVendors] = useState([]);
   useEffect(() => {
-    function onStorage(e) {
-      if (e.key === 'mohanah_db_vendors') {
-        setVendors(vendorDB.getAll().filter(v => v.active !== false));
-      }
-    }
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    supabaseVendorsAPI.getAll()
+      .then(data => setVendors((data || []).filter(v => v.active !== false)))
+      .catch(() => setVendors(vendorDB.getAll().filter(v => v.active !== false)));
   }, []);
 
   const [images, setImages] = useState(() => {
@@ -770,8 +765,13 @@ function OrdersSection() {
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [trackingInputs, setTrackingInputs] = useState({});
   const [savedOrderId, setSavedOrderId] = useState(null);
-  // Product catalog for enriching order items with fabric/image details
-  const [allProducts] = useState(() => productsDB.getAll());
+  // Product catalog for enriching order items with fabric/image/vendor details
+  const [allProducts, setAllProducts] = useState(() => productsDB.getAll());
+  const [allVendors,  setAllVendors]  = useState([]);
+  useEffect(() => {
+    supabaseVendorsAPI.getAll().then(d => setAllVendors(d || [])).catch(() => {});
+    supabaseProductsAPI.getAll().then(d => { if (d?.length) setAllProducts(d); }).catch(() => {});
+  }, []);
 
   async function refreshOrders() {
     try {
@@ -868,14 +868,19 @@ function OrdersSection() {
             : [{ id: o.id, name: o.product, qty: 1, price: o.price, fabric: o.fabric, imageUrl: o.selectedColorImage || o.imageUrl || o.images?.[0]?.src || '', selectedColorName: o.selectedColorName, selectedColorImage: o.selectedColorImage, selectedColorHex: o.selectedColorHex }];
 
           const displayItems = rawItems.map(item => {
-            const prod = allProducts.find(p => p.id === item.id);
+            const prod       = allProducts.find(p => p.id === item.id);
+            const vendorName = prod?.vendorName || prod?.vendor_name || '';
+            const vendor     = vendorName ? allVendors.find(v => v.name === vendorName || v.id === prod?.vendorId || v.id === prod?.vendor_id) : null;
             return {
               ...item,
               fabric:      item.fabric      || prod?.fabric      || '',
               imageUrl:    item.imageUrl    || item.selectedColorImage || prod?.images?.[0]?.src || prod?.imageUrl || '',
               occasions:   prod?.occasions  || (prod?.occasion ? [prod.occasion] : []),
               region:      prod?.region     || '',
-              // selectedColorName stays from item (customer's actual choice — can't reconstruct from product)
+              vendorName:  vendorName,
+              vendorPhone: vendor?.phone    || '',
+              vendorPhone2:vendor?.phone2   || '',
+              vendorWhatsApp: vendor?.phone ? `https://wa.me/91${vendor.phone.replace(/\D/g,'')}` : '',
             };
           });
 
@@ -981,6 +986,25 @@ function OrdersSection() {
                         <div style={{ textAlign: 'right', flexShrink: 0 }}>
                           <div style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 800, color: 'var(--primary)' }}>₹{((item.price || 0) * (item.qty || 1)).toLocaleString('en-IN')}</div>
                           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>Qty: {item.qty || 1}</div>
+                          {item.vendorName && (
+                            <div style={{ marginTop: 6, textAlign: 'right' }}>
+                              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 0.5 }}>🏭 {item.vendorName}</div>
+                              {item.vendorPhone && (
+                                <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end', marginTop: 3 }}>
+                                  <a href={`tel:${item.vendorPhone}`}
+                                    style={{ fontSize: 10, padding: '2px 7px', borderRadius: 6, background: '#E8F5E9', color: '#2E7D32', textDecoration: 'none', fontWeight: 700 }}>
+                                    📞 Call
+                                  </a>
+                                  {item.vendorWhatsApp && (
+                                    <a href={item.vendorWhatsApp} target="_blank" rel="noreferrer"
+                                      style={{ fontSize: 10, padding: '2px 7px', borderRadius: 6, background: '#E8F5E9', color: '#2E7D32', textDecoration: 'none', fontWeight: 700 }}>
+                                      💬 WA
+                                    </a>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -1504,12 +1528,26 @@ function BannerSection() {
 
 // ─── Vendors Section ─────────────────────────
 function VendorSection() {
-  const [vendors,    setVendors]    = useState(() => vendorDB.getAll());
+  const [vendors,    setVendors]    = useState([]);
+  const [loading,    setLoading]    = useState(true);
   const [showForm,   setShowForm]   = useState(false);
   const [editId,     setEditId]     = useState(null);
   const [deleteId,   setDeleteId]   = useState(null);
   const [search,     setSearch]     = useState('');
   const [saved,      setSaved]      = useState(false);
+
+  async function refreshVendors() {
+    try {
+      const data = await supabaseVendorsAPI.getAll();
+      setVendors(data || []);
+    } catch {
+      setVendors(vendorDB.getAll());
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { refreshVendors(); }, []);
 
   const EMPTY = {
     name: '', contactPerson: '', phone: '', phone2: '',
@@ -1541,34 +1579,38 @@ function VendorSection() {
     setSaved(false);
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!form.name.trim()) return;
-    if (editId) {
-      vendorDB.update(editId, form);
-    } else {
-      vendorDB.add(form);
+    try {
+      if (editId) {
+        await supabaseVendorsAPI.update(editId, form);
+      } else {
+        await supabaseVendorsAPI.add({ ...form, active: true });
+      }
+      await refreshVendors();
+      setSaved(true);
+      setTimeout(() => { setSaved(false); setShowForm(false); setEditId(null); }, 1400);
+    } catch (err) {
+      alert('❌ Save failed: ' + err.message);
     }
-    const updated = vendorDB.getAll();
-    setVendors(updated);
-    window.dispatchEvent(new StorageEvent('storage', { key: 'mohanah_db_vendors', newValue: JSON.stringify(updated) }));
-    setSaved(true);
-    setTimeout(() => { setSaved(false); setShowForm(false); setEditId(null); }, 1400);
   }
 
-  function handleDelete(id) {
-    vendorDB.delete(id);
-    const updated = vendorDB.getAll();
-    setVendors(updated);
-    window.dispatchEvent(new StorageEvent('storage', { key: 'mohanah_db_vendors', newValue: JSON.stringify(updated) }));
+  async function handleDelete(id) {
+    try {
+      await supabaseVendorsAPI.delete(id);
+      await refreshVendors();
+    } catch (err) {
+      alert('❌ Delete failed: ' + err.message);
+    }
     setDeleteId(null);
     if (editId === id) { setShowForm(false); setEditId(null); }
   }
 
-  function toggleActive(v) {
-    vendorDB.update(v.id, { active: !v.active });
-    const updated = vendorDB.getAll();
-    setVendors(updated);
-    window.dispatchEvent(new StorageEvent('storage', { key: 'mohanah_db_vendors', newValue: JSON.stringify(updated) }));
+  async function toggleActive(v) {
+    try {
+      await supabaseVendorsAPI.update(v.id, { active: !v.active });
+      await refreshVendors();
+    } catch {}
   }
 
   const filtered = vendors.filter(v =>
