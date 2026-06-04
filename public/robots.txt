@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Block admin pages from Google
+Disallow: /admin
+Disallow: /admin-login
+Disallow: /cart
+Disallow: /checkout
+
+Sitemap: https://www.mohanah.com/sitemap.xml

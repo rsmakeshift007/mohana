@@ -37,6 +37,71 @@ export default function ProductDetail() {
     if (id) setProductReviews(reviewsDB.getByProduct(id));
   }, [id]);
 
+  // ── Dynamic SEO meta tags for each product ──
+  useEffect(() => {
+    if (!product) return;
+    const img  = product.images?.[0]?.src || product.imageUrl || '';
+    const desc = product.description
+      ? product.description.slice(0, 155)
+      : `${product.fabric || 'Handcrafted'} saree — ${product.occasions?.join(', ') || 'Festive'} wear. ₹${product.price?.toLocaleString('en-IN')}. Free delivery above ₹2000. Mohanah, Varanasi.`;
+    const title = `${product.name} — ${product.fabric || 'Saree'} | Mohanah${product.region ? ` ${product.region}` : ''}`;
+
+    document.title = title;
+    const setMeta = (sel, val) => { const el = document.querySelector(sel); if (el) el.setAttribute('content', val); };
+    setMeta('meta[name="description"]',         desc);
+    setMeta('meta[property="og:title"]',         title);
+    setMeta('meta[property="og:description"]',   desc);
+    setMeta('meta[property="og:image"]',         img);
+    setMeta('meta[property="og:url"]',           window.location.href);
+    setMeta('meta[name="twitter:title"]',        title);
+    setMeta('meta[name="twitter:description"]',  desc);
+    setMeta('meta[name="twitter:image"]',        img);
+
+    // Canonical URL
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical); }
+    canonical.href = window.location.href;
+
+    // Product JSON-LD
+    const existing = document.getElementById('product-jsonld');
+    if (existing) existing.remove();
+    const script = document.createElement('script');
+    script.id   = 'product-jsonld';
+    script.type = 'application/ld+json';
+    script.text = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type":    "Product",
+      "name":     product.name,
+      "image":    img ? [img] : [],
+      "description": desc,
+      "brand":    { "@type": "Brand", "name": "Mohanah" },
+      "offers":   {
+        "@type":         "Offer",
+        "url":           window.location.href,
+        "priceCurrency": "INR",
+        "price":         product.price,
+        "availability":  product.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        "seller":        { "@type": "Organization", "name": "Mohanah" }
+      },
+      ...(product.rating && {
+        "aggregateRating": {
+          "@type":       "AggregateRating",
+          "ratingValue": product.rating,
+          "reviewCount": product.reviews || 1,
+          "bestRating":  5,
+          "worstRating": 1
+        }
+      })
+    });
+    document.head.appendChild(script);
+
+    return () => {
+      document.title = 'Mohanah — Banarasi Saree Online | Handcrafted Silk Sarees Varanasi';
+      const s = document.getElementById('product-jsonld');
+      if (s) s.remove();
+    };
+  }, [product]);
+
   // Load delivery info from Supabase settings
   useEffect(() => {
     import('../services/supabase').then(({ settingsAPI }) => {
