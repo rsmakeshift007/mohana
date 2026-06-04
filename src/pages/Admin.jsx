@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authAPI, bannersAPI, reelsAPI, storageAPI, productsAPI as supabaseProductsAPI, categoriesAPI as supabaseCategoriesAPI } from '../services/supabase';
+import { authAPI, bannersAPI, reelsAPI, storageAPI, productsAPI as supabaseProductsAPI, categoriesAPI as supabaseCategoriesAPI, ordersAPI as supabaseOrdersAPI, reviewsAPI } from '../services/supabase';
 import { productsDB, ordersDB, customersDB, settingsDB, getDBStats, bannerDB, legalDB, vendorDB, manualOrdersDB, categoriesDB, faqsDB } from '../services/db';
 import { productsAPI, ordersAPI, customersAPI, settingsAPI, getAPIStats, isBackendAvailable } from '../services/api';
 
@@ -746,39 +746,62 @@ function ProductForm({ onSave, onCancel, editProduct }) {
 }
 
 // ─── Orders Section ──────────────────────────
-function OrdersSection({ useBackend }) {
+// snake_case (Supabase) → camelCase (UI)
+function normalizeOrder(o) {
+  return {
+    ...o,
+    id:                 o.order_number       || o.id,
+    _dbId:              o.id,
+    trackingNumber:     o.tracking_number    || o.trackingNumber    || '',
+    estimatedDelivery:  o.estimated_delivery || o.estimatedDelivery || '',
+    selectedColorName:  o.selected_color_name  || o.selectedColorName  || '',
+    selectedColorImage: o.selected_color_image || o.selectedColorImage || '',
+    selectedColorHex:   o.selected_color_hex   || o.selectedColorHex   || '',
+    imageUrl:           o.image_url   || o.imageUrl   || '',
+    paymentMethod:      o.payment_method || o.paymentMethod || 'UPI',
+  };
+}
+
+function OrdersSection() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [search, setSearch] = useState('');
-  const [orderList, setOrderList] = useState(() => ordersDB.getAll());
+  const [orderList, setOrderList] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [trackingInputs, setTrackingInputs] = useState({});
   const [savedOrderId, setSavedOrderId] = useState(null);
   // Product catalog for enriching order items with fabric/image details
   const [allProducts] = useState(() => productsDB.getAll());
 
-  useEffect(() => {
-    if (useBackend) {
-      ordersAPI.getAll()
-        .then(data => setOrderList(data))
-        .catch(() => setOrderList(ordersDB.getAll()));
+  async function refreshOrders() {
+    try {
+      const data = await supabaseOrdersAPI.getAll();
+      setOrderList(data.map(normalizeOrder));
+    } catch (err) {
+      console.error('Orders fetch error:', err.message);
+    } finally {
+      setLoading(false);
     }
-  }, [useBackend]);
+  }
+
+  useEffect(() => { refreshOrders(); }, []);
 
   const statuses = ['All', 'placed', 'confirmed', 'packed', 'shipped', 'out_for_delivery', 'delivered', 'cancelled'];
   const statusLabel = { placed: 'Placed', confirmed: 'Confirmed', packed: 'Packed', shipped: 'Shipped', out_for_delivery: 'Out for Delivery', delivered: 'Delivered', cancelled: 'Cancelled' };
   const statusColor = { placed: '#1565C0', confirmed: '#1565C0', packed: '#F57F17', shipped: '#1565C0', out_for_delivery: '#C9956C', delivered: '#2E7D32', cancelled: '#C62828' };
   const statusBg = { placed: '#E3F2FD', confirmed: '#E3F2FD', packed: '#FFF8E1', shipped: '#E3F2FD', out_for_delivery: '#FFF3E8', delivered: '#E8F5E9', cancelled: '#FFEBEE' };
 
-  function refreshOrders() {
-    setOrderList(ordersDB.getAll());
-  }
-
-  async function handleStatusChange(id, newStatus) {
-    if (useBackend) {
-      try { await ordersAPI.updateStatus(id, newStatus); } catch {}
+  async function handleStatusChange(orderId, newStatus) {
+    const progressMap = { placed: 10, confirmed: 25, packed: 40, shipped: 65, out_for_delivery: 85, delivered: 100, cancelled: 0 };
+    // Find the actual Supabase UUID (_dbId)
+    const order = orderList.find(o => o.id === orderId);
+    const dbId = order?._dbId || orderId;
+    try {
+      await supabaseOrdersAPI.update(dbId, { status: newStatus, progress: progressMap[newStatus] ?? 10 });
+      setOrderList(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus, progress: progressMap[newStatus] ?? o.progress } : o));
+    } catch (err) {
+      console.error('Status update error:', err.message);
     }
-    ordersDB.updateStatus(id, newStatus);
-    refreshOrders();
   }
 
   function handleTrackingChange(id, field, value) {
@@ -788,15 +811,20 @@ function OrdersSection({ useBackend }) {
     }));
   }
 
-  function saveTracking(id) {
-    const order = orderList.find(o => o.id === id);
-    const inputs = trackingInputs[id] || {};
-    const trackingNumber = inputs.trackingNumber !== undefined ? inputs.trackingNumber : (order?.trackingNumber || '');
-    const estimatedDelivery = inputs.estimatedDelivery !== undefined ? inputs.estimatedDelivery : (order?.estimatedDelivery || '');
-    ordersDB.updateFields(id, { trackingNumber, estimatedDelivery });
-    refreshOrders();
-    setSavedOrderId(id);
-    setTimeout(() => setSavedOrderId(null), 2000);
+  async function saveTracking(orderId) {
+    const order = orderList.find(o => o.id === orderId);
+    const dbId = order?._dbId || orderId;
+    const inputs = trackingInputs[orderId] || {};
+    const tracking_number    = inputs.trackingNumber    !== undefined ? inputs.trackingNumber    : (order?.trackingNumber    || '');
+    const estimated_delivery = inputs.estimatedDelivery !== undefined ? inputs.estimatedDelivery : (order?.estimatedDelivery || '');
+    try {
+      await supabaseOrdersAPI.update(dbId, { tracking_number, estimated_delivery });
+      setOrderList(prev => prev.map(o => o.id === orderId ? { ...o, trackingNumber: tracking_number, estimatedDelivery: estimated_delivery } : o));
+      setSavedOrderId(orderId);
+      setTimeout(() => setSavedOrderId(null), 2000);
+    } catch (err) {
+      console.error('Tracking save error:', err.message);
+    }
   }
 
   const filtered = orderList.filter(o => {
@@ -819,9 +847,16 @@ function OrdersSection({ useBackend }) {
         </div>
       </div>
 
+      {loading && (
+        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>⏳</div>
+          <div style={{ fontSize: 14, fontWeight: 600 }}>Loading orders from server...</div>
+        </div>
+      )}
+
       {/* Orders list */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {filtered.map(o => {
+        {!loading && filtered.map(o => {
           const isExpanded = expandedOrderId === o.id;
           const inputs = trackingInputs[o.id] || {};
           const trackingVal = inputs.trackingNumber !== undefined ? inputs.trackingNumber : (o.trackingNumber || '');
@@ -1023,7 +1058,7 @@ function OrdersSection({ useBackend }) {
         })}
       </div>
 
-      {filtered.length === 0 && (
+      {!loading && filtered.length === 0 && (
         <div style={{ textAlign: 'center', padding: '60px 40px', color: 'var(--text-muted)', background: 'var(--surface)', borderRadius: 'var(--radius-lg)' }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>📦</div>
           <div style={{ fontSize: 16, fontWeight: 700 }}>No orders found</div>
@@ -3472,6 +3507,14 @@ export default function Admin() {
   // Scroll to top whenever section changes
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, [activeSection]);
 
+  // Dashboard orders from Supabase
+  const [dashboardOrders, setDashboardOrders] = useState([]);
+  useEffect(() => {
+    supabaseOrdersAPI.getAll()
+      .then(data => setDashboardOrders(data.map(normalizeOrder)))
+      .catch(() => {});
+  }, []);
+
   // Load products from Supabase on mount — works on ALL devices
   useEffect(() => {
     setBackendStatus('online');
@@ -3709,7 +3752,7 @@ export default function Admin() {
 
             {/* ── Computed analytics from orders + products ── */}
             {(() => {
-              const allOrders   = ordersDB.getAll();
+              const allOrders   = dashboardOrders;
               const allProds    = productList.length ? productList : productsDB.getAll();
               const delivered   = allOrders.filter(o => o.status === 'delivered');
               const activeOrds  = allOrders.filter(o => !['delivered','cancelled'].includes(o.status));
@@ -3844,7 +3887,7 @@ export default function Admin() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 500 }}>
                   <thead><tr style={{ background: 'var(--surface-alt)' }}>{['Order', 'Product', 'Amount', 'Status'].map(h => <th key={h} style={{ padding: '9px 16px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1 }}>{h.toUpperCase()}</th>)}</tr></thead>
                   <tbody>
-                    {ordersDB.getAll().slice(0, 5).map(o => {
+                    {dashboardOrders.slice(0, 5).map(o => {
                       const cfg = { placed: { l: 'Placed', bg: '#E3F2FD', c: '#1565C0' }, confirmed: { l: 'Confirmed', bg: '#E3F2FD', c: '#1565C0' }, out_for_delivery: { l: 'Out for Delivery', bg: '#FFF3E8', c: '#C9956C' }, delivered: { l: 'Delivered', bg: '#E8F5E9', c: '#2E7D32' }, packed: { l: 'Packed', bg: '#FFF8E1', c: '#F57F17' }, shipped: { l: 'Shipped', bg: '#E3F2FD', c: '#1565C0' }, cancelled: { l: 'Cancelled', bg: '#FFEBEE', c: '#C62828' } }[o.status] || { l: o.status, bg: '#F5F5F5', c: '#666' };
                       return (
                         <tr key={o.id} style={{ borderBottom: '1px solid var(--border)' }}
@@ -3903,7 +3946,7 @@ export default function Admin() {
         )}
 
         {/* ── Orders ── */}
-        {activeSection === 'orders' && <OrdersSection useBackend={useBackend} />}
+        {activeSection === 'orders' && <OrdersSection />}
 
         {/* ── Customers ── */}
         {activeSection === 'customers' && <CustomersSection />}

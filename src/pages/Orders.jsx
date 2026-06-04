@@ -1,7 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ordersDB } from '../services/db';
 import { useAuth } from '../context/AuthContext';
+import { ordersAPI as supabaseOrdersAPI } from '../services/supabase';
+
+// snake_case (Supabase) → camelCase (UI)
+function normalizeOrder(o) {
+  return {
+    ...o,
+    id:                 o.order_number       || o.id,
+    trackingNumber:     o.tracking_number    || o.trackingNumber    || '',
+    estimatedDelivery:  o.estimated_delivery || o.estimatedDelivery || '',
+    selectedColorName:  o.selected_color_name  || o.selectedColorName  || '',
+    selectedColorImage: o.selected_color_image || o.selectedColorImage || '',
+    selectedColorHex:   o.selected_color_hex   || o.selectedColorHex   || '',
+    imageUrl:           o.image_url   || o.imageUrl   || '',
+    paymentMethod:      o.payment_method || o.paymentMethod || 'UPI',
+  };
+}
 
 const TABS = ['All', 'Active', 'Delivered', 'Cancelled'];
 
@@ -187,30 +202,20 @@ export default function Orders() {
   const [orders, setOrders] = useState([]);
   const { user } = useAuth();
 
-  function loadUserOrders() {
-    const all = ordersDB.getAll();
-    // Filter by current user's email — if no user logged in, show nothing
+  async function loadUserOrders() {
     if (!user) { setOrders([]); return; }
-    const mine = all.filter(o =>
-      o.email === user.email ||
-      o.customerEmail === user.email ||
-      o.userEmail === user.email
-    );
-    setOrders(mine);
+    try {
+      const data = await supabaseOrdersAPI.getByUser(user.id);
+      setOrders(data.map(normalizeOrder));
+    } catch (err) {
+      console.error('Orders load error:', err.message);
+      setOrders([]);
+    }
   }
 
   useEffect(() => {
     loadUserOrders();
   }, [user]);
-
-  // Refresh when localStorage changes (e.g. admin updates order)
-  useEffect(() => {
-    function handleStorage() {
-      loadUserOrders();
-    }
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
-  }, []);
 
   const filtered = orders.filter(o => {
     if (activeTab === 'All') return true;

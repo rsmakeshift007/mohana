@@ -1,7 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { settingsDB, ordersDB } from '../services/db';
+import { useAuth } from '../context/AuthContext';
+import { settingsDB } from '../services/db';
+import { ordersAPI as supabaseOrdersAPI, settingsAPI } from '../services/supabase';
 
 const STORE_NAME = 'Mohanah';
 
@@ -19,6 +21,7 @@ const STEPS = ['Address', 'Payment', 'Review', 'Confirm'];
 
 export default function Checkout() {
   const { items, subtotal, couponDiscount, delivery, giftWrapCharge, total, dispatch } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [placing, setPlacing] = useState(false);
@@ -72,42 +75,55 @@ export default function Checkout() {
     else placeOrder();
   }
 
-  function placeOrder() {
+  async function placeOrder() {
     setPlacing(true);
-    setTimeout(() => {
-      // Build order object for each cart item (or one combined order)
+    try {
       const mainItem = items[0] || {};
-      const newOrder = ordersDB.add({
-        product: items.length === 1 ? mainItem.name : `${mainItem.name} + ${items.length - 1} more`,
-        fabric: mainItem.fabric || '',
-        color: mainItem.color || '#C9956C',
-        images: mainItem.images || [],
-        imageUrl: mainItem.imageUrl || mainItem.images?.[0]?.src || '',
-        price: total,
-        address: { ...address },
-        selectedColorName:  mainItem.selectedColorName  || '',
-        selectedColorHex:   mainItem.selectedColorHex   || mainItem.color || '',
-        selectedColorImage: mainItem.selectedColorImage || mainItem.imageUrl || mainItem.images?.[0]?.src || '',
+      const year = new Date().getFullYear();
+      const orderNumber = `MNH-${year}-${String(Date.now()).slice(-6)}`;
+
+      const saved = await supabaseOrdersAPI.add({
+        order_number:          orderNumber,
+        user_id:               user?.id   || null,
+        user_email:            user?.email || '',
+        product:               items.length === 1 ? mainItem.name : `${mainItem.name} + ${items.length - 1} more`,
+        fabric:                mainItem.fabric || '',
+        color:                 mainItem.color  || '#C9956C',
+        images:                mainItem.images || [],
+        image_url:             mainItem.selectedColorImage || mainItem.imageUrl || mainItem.images?.[0]?.src || '',
+        price:                 total,
+        address:               { ...address },
+        selected_color_name:   mainItem.selectedColorName  || '',
+        selected_color_hex:    mainItem.selectedColorHex   || mainItem.color || '',
+        selected_color_image:  mainItem.selectedColorImage || mainItem.imageUrl || mainItem.images?.[0]?.src || '',
         items: items.map(i => ({
-          id: i.id,
-          name: i.name,
-          qty: i.qty,
-          price: i.price,
-          fabric: i.fabric || '',
-          imageUrl: i.selectedColorImage || i.imageUrl || i.images?.[0]?.src || '',
-          selectedColorName:  i.selectedColorName  || '',
-          selectedColorImage: i.selectedColorImage || '',
-          selectedColorHex:   i.selectedColorHex   || i.color || '',
+          id:                  i.id,
+          name:                i.name,
+          qty:                 i.qty,
+          price:               i.price,
+          fabric:              i.fabric || '',
+          imageUrl:            i.selectedColorImage || i.imageUrl || i.images?.[0]?.src || '',
+          selectedColorName:   i.selectedColorName  || '',
+          selectedColorImage:  i.selectedColorImage || '',
+          selectedColorHex:    i.selectedColorHex   || i.color || '',
         })),
-        paymentMethod: 'UPI',
-        trackingNumber: '',
-        estimatedDelivery: '',
+        payment_method:        'UPI',
+        tracking_number:       '',
+        estimated_delivery:    '',
+        status:                'placed',
+        progress:              10,
+        date:                  new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
       });
-      setOrderId(newOrder.id);
+
+      setOrderId(saved.order_number || orderNumber);
       dispatch({ type: 'CLEAR_CART' });
-      setPlacing(false);
       setPlaced(true);
-    }, 1800);
+    } catch (err) {
+      console.error('Order failed:', err.message);
+      alert('❌ Order place nahi hua. Please retry.\n' + err.message);
+    } finally {
+      setPlacing(false);
+    }
   }
 
   return (

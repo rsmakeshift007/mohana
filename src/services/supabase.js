@@ -185,6 +185,16 @@ export const ordersAPI = {
     return data;
   },
 
+  async getByUser(userId) {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  },
+
   async delete(id) {
     const { error } = await supabase
       .from('orders')
@@ -433,6 +443,31 @@ export const reelsAPI = {
   async delete(id) {
     const { error } = await supabase.from('reels').delete().eq('id', id);
     if (error) throw error;
+  },
+};
+
+// ─────────────────────────────────────────────
+// REVIEWS
+// ─────────────────────────────────────────────
+export const reviewsAPI = {
+  async getByProduct(productId) {
+    const { data, error } = await supabase
+      .from('reviews')
+      .select('*')
+      .eq('product_id', productId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  },
+
+  async add(review) {
+    const { data, error } = await supabase
+      .from('reviews')
+      .insert([review])
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
   },
 };
 
