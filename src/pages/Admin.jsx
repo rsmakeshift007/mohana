@@ -197,7 +197,7 @@ function ReelUploadZone({ reels, onAdd, onRemove, onLabelChange }) {
 function ProductForm({ onSave, onCancel, editProduct }) {
   const [form, setForm] = useState(() => {
     const base = editProduct || {
-      name: '', fabric: 'Pure Silk', price: '', originalPrice: '',
+      name: '', fabric: 'Pure Silk', price: '', originalPrice: '', costPrice: '',
       region: '', color: '#8B1A1A', description: '', inStock: true,
       vendorId: '', vendorName: '',
       length: '5.5 Metres', blousePiece: 'Included (0.8m)', careInstructions: 'Dry Clean Only',
@@ -304,6 +304,7 @@ function ProductForm({ onSave, onCancel, editProduct }) {
         imageUrl:      mainImageUrl,
         price:         Number(form.price),
         originalPrice: form.originalPrice ? Number(form.originalPrice) : null,
+        costPrice:     form.costPrice     ? Number(form.costPrice)     : null,
         discount:      form.originalPrice ? Math.round((1 - form.price / form.originalPrice) * 100) : 0,
         occasions:     occArr,
         occasion:      occArr[0],
@@ -405,8 +406,8 @@ function ProductForm({ onSave, onCancel, editProduct }) {
             )}
           </div>
 
-          {/* Price + Original Price */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {/* Price + Original Price + Cost Price */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
             <div>
               <label style={labelSt}>SELLING PRICE (₹) *</label>
               <input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
@@ -421,14 +422,45 @@ function ProductForm({ onSave, onCancel, editProduct }) {
                 onFocus={e => e.target.style.borderColor = 'var(--accent)'}
                 onBlur={e => e.target.style.borderColor = 'var(--border)'} />
             </div>
+            <div>
+              <label style={{ ...labelSt, color: '#C62828' }}>COST PRICE (₹) <span style={{ fontWeight: 400, textTransform: 'none', fontSize: 10, color: 'var(--text-muted)' }}>(admin only)</span></label>
+              <input type="number" value={form.costPrice || ''} onChange={e => setForm(f => ({ ...f, costPrice: e.target.value }))}
+                placeholder="e.g. 2500" style={{ ...inputSt, borderColor: '#FFCDD2' }}
+                onFocus={e => e.target.style.borderColor = '#C62828'}
+                onBlur={e => e.target.style.borderColor = '#FFCDD2'} />
+            </div>
           </div>
 
-          {/* If discount auto-calculated */}
-          {form.price && form.originalPrice && Number(form.originalPrice) > Number(form.price) && (
-            <div style={{ background: '#E8F5E9', borderRadius: 8, padding: '8px 14px', fontSize: 12, color: 'var(--success)', fontWeight: 700 }}>
-              ✓ Discount: {Math.round((1 - form.price / form.originalPrice) * 100)}% — Customer saves ₹{(form.originalPrice - form.price).toLocaleString('en-IN')}
-            </div>
-          )}
+          {/* Auto-calculated profit + discount */}
+          {(() => {
+            const sell = Number(form.price) || 0;
+            const cost = Number(form.costPrice) || 0;
+            const mrp  = Number(form.originalPrice) || 0;
+            const profit = sell - cost;
+            const margin = sell > 0 && cost > 0 ? Math.round((profit / sell) * 100) : 0;
+            const discount = mrp > sell && mrp > 0 ? Math.round((1 - sell / mrp) * 100) : 0;
+            if (!sell || !cost) return null;
+            return (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ background: profit >= 0 ? '#E8F5E9' : '#FFEBEE', borderRadius: 8, padding: '10px 14px', border: `1px solid ${profit >= 0 ? '#A5D6A7' : '#FFCDD2'}` }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: profit >= 0 ? '#2E7D32' : '#C62828', letterSpacing: 1, marginBottom: 3 }}>PROFIT PER SAREE</div>
+                  <div style={{ fontSize: 18, fontWeight: 900, color: profit >= 0 ? '#2E7D32' : '#C62828', fontFamily: 'var(--font-sans)' }}>
+                    {profit >= 0 ? '📈' : '📉'} ₹{Math.abs(profit).toLocaleString('en-IN')}
+                  </div>
+                  <div style={{ fontSize: 11, color: profit >= 0 ? '#388E3C' : '#C62828', marginTop: 2 }}>
+                    {margin}% margin
+                  </div>
+                </div>
+                {discount > 0 && (
+                  <div style={{ background: '#E3F2FD', borderRadius: 8, padding: '10px 14px', border: '1px solid #90CAF9' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#1565C0', letterSpacing: 1, marginBottom: 3 }}>CUSTOMER DISCOUNT</div>
+                    <div style={{ fontSize: 18, fontWeight: 900, color: '#1565C0', fontFamily: 'var(--font-sans)' }}>🏷️ {discount}% OFF</div>
+                    <div style={{ fontSize: 11, color: '#1976D2', marginTop: 2 }}>Customer saves ₹{(mrp - sell).toLocaleString('en-IN')}</div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Region + Saree Preview */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'end' }}>
@@ -3472,6 +3504,7 @@ export default function Admin() {
       blousePiece:       p.blousePiece       || p.blouse_piece       || '',
       careInstructions:  p.careInstructions  || p.care_instructions  || '',
       colorVariants:     Array.isArray(p.colorVariants) ? p.colorVariants : (Array.isArray(p.color_variants) ? p.color_variants : []),
+      costPrice:         p.costPrice ?? p.cost_price ?? null,
     };
   }
 
@@ -3498,6 +3531,7 @@ export default function Admin() {
       occasions:        product.occasions || [product.occasion || 'Wedding'],
       price:            product.price,
       original_price:   product.originalPrice || null,
+      cost_price:       product.costPrice     || null,
       discount:         product.discount || 0,
       image_url:        product.imageUrl || '',
       images:           product.images || [],
@@ -3670,15 +3704,114 @@ export default function Admin() {
               <p style={{ fontSize: 13, color: 'var(--text-sec)' }}>Here's what's happening with Mohanah today.</p>
             </div>
 
-            {/* Stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 14, marginBottom: 28 }}>
-              <StatCard icon="💰" label="Total Revenue" value={`₹${stats.totalRevenue.toLocaleString('en-IN')}`} sub="All time" color="#2E7D32" />
-              <StatCard icon="📦" label="Total Orders" value={stats.totalOrders} sub={`${stats.activeOrders} active`} color="#1565C0" />
-              <StatCard icon="🥻" label="Products" value={stats.totalProducts} sub={`${stats.inStockCount} in stock`} color="var(--accent)" />
-              <StatCard icon="👥" label="Customers" value={stats.totalCustomers} sub="Registered users" color="#AD1457" />
-              <StatCard icon="💎" label="Avg Order Value" value={`₹${stats.avgOrderValue.toLocaleString('en-IN')}`} sub="Per order" color="#F57F17" />
-              <StatCard icon="🔄" label="Return Rate" value="2.1%" sub="Last 30 days" color="var(--success)" />
-            </div>
+            {/* ── Computed analytics from orders + products ── */}
+            {(() => {
+              const allOrders   = ordersDB.getAll();
+              const allProds    = productsDB.getAll();
+              const delivered   = allOrders.filter(o => o.status === 'delivered');
+              const activeOrds  = allOrders.filter(o => !['delivered','cancelled'].includes(o.status));
+
+              // Revenue & profit
+              const totalRevenue = delivered.reduce((s, o) => s + (o.price || 0), 0);
+
+              // Profit: match each delivered order's items to product costPrice
+              let totalProfit = 0;
+              let totalCostKnown = 0;
+              delivered.forEach(o => {
+                const items = o.items?.length ? o.items : [{ id: o.id, qty: 1, price: o.price }];
+                items.forEach(item => {
+                  const prod = allProds.find(p => p.id === item.id);
+                  const cost = prod?.costPrice || prod?.cost_price || null;
+                  if (cost) {
+                    totalProfit += (((item.price || 0) - cost) * (item.qty || 1));
+                    totalCostKnown += (item.qty || 1);
+                  }
+                });
+              });
+
+              // Sarees sold (all delivered items)
+              const sareesSold = delivered.reduce((s, o) => {
+                const cnt = o.items?.length
+                  ? o.items.reduce((a, i) => a + (i.qty || 1), 0)
+                  : 1;
+                return s + cnt;
+              }, 0);
+
+              // City / State breakdown from ALL orders
+              const cityMap  = {};
+              const stateMap = {};
+              allOrders.forEach(o => {
+                const city  = o.address?.city?.trim();
+                const state = o.address?.state?.trim();
+                if (city)  cityMap[city]   = (cityMap[city]   || 0) + 1;
+                if (state) stateMap[state] = (stateMap[state] || 0) + 1;
+              });
+              const topCities  = Object.entries(cityMap).sort((a,b) => b[1]-a[1]).slice(0, 8);
+              const topStates  = Object.entries(stateMap).sort((a,b) => b[1]-a[1]).slice(0, 6);
+              const maxCityVal = topCities[0]?.[1] || 1;
+              const maxStateVal = topStates[0]?.[1] || 1;
+
+              return (
+                <>
+                  {/* Stats row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 14, marginBottom: 28 }}>
+                    <StatCard icon="💰" label="Total Revenue" value={`₹${totalRevenue.toLocaleString('en-IN')}`} sub="Delivered orders" color="#2E7D32" />
+                    <StatCard icon="📈" label="Total Profit" value={totalCostKnown > 0 ? `₹${totalProfit.toLocaleString('en-IN')}` : '—'} sub={totalCostKnown > 0 ? 'From delivered orders' : 'Add cost price to products'} color={totalProfit >= 0 ? '#2E7D32' : '#C62828'} />
+                    <StatCard icon="🥻" label="Sarees Sold" value={sareesSold} sub={`${delivered.length} delivered orders`} color="var(--accent)" />
+                    <StatCard icon="📦" label="Total Orders" value={allOrders.length} sub={`${activeOrds.length} active`} color="#1565C0" />
+                    <StatCard icon="👥" label="Customers" value={stats.totalCustomers} sub="Registered users" color="#AD1457" />
+                    <StatCard icon="💎" label="Avg Order Value" value={`₹${allOrders.length ? Math.round(allOrders.reduce((s,o)=>s+(o.price||0),0)/allOrders.length).toLocaleString('en-IN') : 0}`} sub="Per order" color="#F57F17" />
+                  </div>
+
+                  {/* ── City / State Analytics ── */}
+                  {(topCities.length > 0 || topStates.length > 0) && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 28 }}>
+
+                      {/* City breakdown */}
+                      <div className="card" style={{ padding: 20 }}>
+                        <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 15, marginBottom: 4 }}>🏙️ Top Cities</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 14 }}>Kahan se sabse zyada orders aaye</div>
+                        {topCities.length === 0
+                          ? <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>No city data yet</div>
+                          : topCities.map(([city, count]) => (
+                            <div key={city} style={{ marginBottom: 10 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>📍 {city}</span>
+                                <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--accent)' }}>{count} order{count !== 1 ? 's' : ''}</span>
+                              </div>
+                              <div style={{ height: 6, borderRadius: 3, background: 'var(--border)', overflow: 'hidden' }}>
+                                <div style={{ height: '100%', borderRadius: 3, background: 'var(--accent)', width: `${Math.round((count / maxCityVal) * 100)}%`, transition: 'width 0.4s' }} />
+                              </div>
+                            </div>
+                          ))
+                        }
+                      </div>
+
+                      {/* State breakdown */}
+                      <div className="card" style={{ padding: 20 }}>
+                        <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 15, marginBottom: 4 }}>🗺️ Top States</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 14 }}>Kon se state se sabse zyada orders</div>
+                        {topStates.length === 0
+                          ? <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>No state data yet</div>
+                          : topStates.map(([state, count]) => (
+                            <div key={state} style={{ marginBottom: 10 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>🗺️ {state}</span>
+                                <span style={{ fontSize: 12, fontWeight: 800, color: '#1565C0' }}>{count} order{count !== 1 ? 's' : ''}</span>
+                              </div>
+                              <div style={{ height: 6, borderRadius: 3, background: 'var(--border)', overflow: 'hidden' }}>
+                                <div style={{ height: '100%', borderRadius: 3, background: '#1565C0', width: `${Math.round((count / maxStateVal) * 100)}%`, transition: 'width 0.4s' }} />
+                              </div>
+                            </div>
+                          ))
+                        }
+                      </div>
+
+                    </div>
+                  )}
+                </>
+              );
+            })()}
 
             {/* Quick Actions */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 28 }}>
