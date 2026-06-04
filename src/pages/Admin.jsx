@@ -3469,6 +3469,9 @@ export default function Admin() {
   const [stats, setStats] = useState(() => getDBStats());
   const [backendStatus, setBackendStatus] = useState('checking');
 
+  // Scroll to top whenever section changes
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, [activeSection]);
+
   // Load products from Supabase on mount — works on ALL devices
   useEffect(() => {
     setBackendStatus('online');
@@ -3707,7 +3710,7 @@ export default function Admin() {
             {/* ── Computed analytics from orders + products ── */}
             {(() => {
               const allOrders   = ordersDB.getAll();
-              const allProds    = productsDB.getAll();
+              const allProds    = productList.length ? productList : productsDB.getAll();
               const delivered   = allOrders.filter(o => o.status === 'delivered');
               const activeOrds  = allOrders.filter(o => !['delivered','cancelled'].includes(o.status));
 

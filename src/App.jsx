@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -30,12 +30,19 @@ function ProtectedAdminRoute({ children }) {
   return children;
 }
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, [pathname]);
+  return null;
+}
+
 function AppLayout() {
   const location = useLocation();
   const isClean = CLEAN_PAGES.some(p => location.pathname.startsWith(p));
 
   return (
     <>
+      <ScrollToTop />
       {!isClean && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
