@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authAPI, bannersAPI, reelsAPI, storageAPI, productsAPI as supabaseProductsAPI, categoriesAPI as supabaseCategoriesAPI, ordersAPI as supabaseOrdersAPI, reviewsAPI } from '../services/supabase';
+import { supabase, authAPI, bannersAPI, reelsAPI, storageAPI, productsAPI as supabaseProductsAPI, categoriesAPI as supabaseCategoriesAPI, ordersAPI as supabaseOrdersAPI, reviewsAPI } from '../services/supabase';
 import { productsDB, ordersDB, customersDB, settingsDB, getDBStats, bannerDB, legalDB, vendorDB, manualOrdersDB, categoriesDB, faqsDB } from '../services/db';
 import { productsAPI, ordersAPI, customersAPI, settingsAPI, getAPIStats, isBackendAvailable } from '../services/api';
 
@@ -3504,6 +3504,63 @@ export default function Admin() {
   const [stats, setStats] = useState(() => getDBStats());
   const [backendStatus, setBackendStatus] = useState('checking');
 
+  // ── New Order Notifications ──────────────────────────────
+  const [newOrderNotifs, setNewOrderNotifs] = useState([]);
+
+  // Play a chime sound using Web Audio API (no file needed)
+  function playChime() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [523, 659, 784].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine'; osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.18);
+        gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + i * 0.18 + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.18 + 0.4);
+        osc.start(ctx.currentTime + i * 0.18);
+        osc.stop(ctx.currentTime + i * 0.18 + 0.5);
+      });
+    } catch {}
+  }
+
+  // Show browser notification (asks permission once)
+  function showBrowserNotif(order) {
+    if (!('Notification' in window)) return;
+    const send = () => new Notification('🛍️ Naya Order Aaya! — Mohanah', {
+      body: `${order.product || 'Order'} · ₹${(order.price || 0).toLocaleString('en-IN')}\n${order.address?.name || ''} · ${order.address?.city || ''}`,
+      icon: '/favicon.ico',
+    });
+    if (Notification.permission === 'granted') send();
+    else if (Notification.permission !== 'denied') {
+      Notification.requestPermission().then(p => { if (p === 'granted') send(); });
+    }
+  }
+
+  // Supabase Realtime — listen for new orders
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-new-orders')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
+        const order = normalizeOrder(payload.new);
+        // Add to notification queue
+        setNewOrderNotifs(prev => [{ ...order, _notifId: Date.now() }, ...prev]);
+        setDashboardOrders(prev => [order, ...prev]);
+        playChime();
+        showBrowserNotif(order);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  // Auto-dismiss notifications after 8 seconds
+  useEffect(() => {
+    if (newOrderNotifs.length === 0) return;
+    const t = setTimeout(() => setNewOrderNotifs(prev => prev.slice(0, -1)), 8000);
+    return () => clearTimeout(t);
+  }, [newOrderNotifs]);
+
   // Scroll to top whenever section changes
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, [activeSection]);
 
@@ -3660,6 +3717,48 @@ export default function Admin() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#F4F6F8' }}>
 
+      {/* ── Order Notification Toasts ── */}
+      <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 360 }}>
+        {newOrderNotifs.map(notif => (
+          <div key={notif._notifId}
+            style={{
+              background: 'white', borderRadius: 14, padding: '14px 16px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+              border: '2px solid #2E7D32',
+              display: 'flex', gap: 12, alignItems: 'flex-start',
+              animation: 'slideInRight 0.3s ease',
+            }}>
+            <div style={{ fontSize: 28, flexShrink: 0 }}>🛍️</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 900, fontSize: 13, color: '#2E7D32', marginBottom: 2 }}>Naya Order Aaya!</div>
+              <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 13, color: 'var(--text)', marginBottom: 3 }}>
+                {notif.product}
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                ₹{(notif.price || 0).toLocaleString('en-IN')} · {notif.address?.name || ''} · {notif.address?.city || ''}
+              </div>
+              <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                <button onClick={() => { setActiveSection('orders'); setNewOrderNotifs(p => p.filter(n => n._notifId !== notif._notifId)); }}
+                  style={{ fontSize: 11, padding: '4px 12px', borderRadius: 6, background: 'var(--primary)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 700 }}>
+                  📦 Dekhein
+                </button>
+                <button onClick={() => setNewOrderNotifs(p => p.filter(n => n._notifId !== notif._notifId))}
+                  style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, background: 'var(--surface-alt)', color: 'var(--text-muted)', border: 'none', cursor: 'pointer' }}>
+                  ✕
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <style>{`
+        @keyframes slideInRight {
+          from { transform: translateX(120%); opacity: 0; }
+          to   { transform: translateX(0);    opacity: 1; }
+        }
+      `}</style>
+
       {/* ── SIDEBAR ── */}
       <aside style={{
         width: sidebarOpen ? 220 : 64, flexShrink: 0,
@@ -3670,10 +3769,24 @@ export default function Admin() {
         overflow: 'hidden',
       }}>
         {/* Collapse toggle */}
-        <button onClick={() => setSidebarOpen(o => !o)}
-          style={{ padding: '14px 0', display: 'flex', alignItems: 'center', justifyContent: sidebarOpen ? 'flex-end' : 'center', paddingRight: sidebarOpen ? 16 : 0, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontSize: 16, transition: 'all 0.2s' }}>
-          {sidebarOpen ? '◀' : '▶'}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px 6px' }}>
+          {/* Notification bell */}
+          {sidebarOpen && (
+            <button onClick={() => setActiveSection('orders')}
+              style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.8)', fontSize: 18, padding: '4px 8px' }}>
+              🔔
+              {newOrderNotifs.length > 0 && (
+                <span style={{ position: 'absolute', top: 0, right: 0, background: '#E53935', color: 'white', borderRadius: '50%', width: 16, height: 16, fontSize: 9, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {newOrderNotifs.length}
+                </span>
+              )}
+            </button>
+          )}
+          <button onClick={() => setSidebarOpen(o => !o)}
+            style={{ marginLeft: 'auto', padding: '4px 8px', display: 'flex', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontSize: 16 }}>
+            {sidebarOpen ? '◀' : '▶'}
+          </button>
+        </div>
 
         {/* Logo */}
         {sidebarOpen && (
