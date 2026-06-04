@@ -793,30 +793,34 @@ function OrdersSection({ useBackend }) {
           const trackingVal = inputs.trackingNumber !== undefined ? inputs.trackingNumber : (o.trackingNumber || '');
           const deliveryVal = inputs.estimatedDelivery !== undefined ? inputs.estimatedDelivery : (o.estimatedDelivery || '');
 
+          // Build display items list — use detailed items[] if available, else fallback to order-level fields
+          const displayItems = (o.items && o.items.length > 0)
+            ? o.items
+            : [{ id: o.id, name: o.product, qty: 1, price: o.price, fabric: o.fabric, imageUrl: o.selectedColorImage || o.imageUrl || o.images?.[0]?.src || '', selectedColorName: o.selectedColorName, selectedColorImage: o.selectedColorImage, selectedColorHex: o.selectedColorHex }];
+
           return (
             <div key={o.id} className="card" style={{ overflow: 'hidden' }}>
-              {/* Row */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', flexWrap: 'wrap' }}>
+              {/* ── Clickable Row ── */}
+              <div
+                onClick={() => setExpandedOrderId(id => id === o.id ? null : o.id)}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', flexWrap: 'wrap', cursor: 'pointer', userSelect: 'none' }}
+              >
                 {/* Product thumb */}
-                <div style={{ width: 44, height: 44, borderRadius: 8, background: `${o.color || '#C9956C'}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>
-                  {o.images?.[0]?.src || o.imageUrl
-                    ? <img src={o.images?.[0]?.src || o.imageUrl} alt={o.product} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
+                <div style={{ width: 48, height: 56, borderRadius: 8, overflow: 'hidden', background: `${o.color || '#C9956C'}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0, border: '1px solid var(--border)' }}>
+                  {o.selectedColorImage || o.images?.[0]?.src || o.imageUrl
+                    ? <img src={o.selectedColorImage || o.images?.[0]?.src || o.imageUrl} alt={o.product} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     : '🥻'
                   }
                 </div>
 
                 <div style={{ flex: 1, minWidth: 120 }}>
-                  <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 14, color: 'var(--text)' }}>{o.product}</div>
-                  {/* Selected Color — admin ko clearly dikhe */}
+                  <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 14, color: 'var(--text)' }}>
+                    {o.product}
+                    {o.items?.length > 1 && <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--accent)', marginLeft: 6 }}>({o.items.length} items)</span>}
+                  </div>
                   {o.selectedColorName && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
-                      {o.selectedColorImage
-                        ? <img src={o.selectedColorImage} alt={o.selectedColorName} style={{ width: 20, height: 24, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border)' }} />
-                        : <div style={{ width: 14, height: 14, borderRadius: '50%', background: o.selectedColorHex || '#888', border: '1px solid var(--border)', flexShrink: 0 }} />
-                      }
-                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', background: 'var(--surface-alt)', padding: '1px 7px', borderRadius: 10, border: '1px solid var(--border)' }}>
-                        🎨 {o.selectedColorName}
-                      </span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: '#1565C0', background: '#E3F2FD', padding: '1px 7px', borderRadius: 10 }}>🎨 {o.selectedColorName}</span>
                     </div>
                   )}
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{o.id} · {o.date}</div>
@@ -829,87 +833,129 @@ function OrdersSection({ useBackend }) {
                   )}
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }} onClick={e => e.stopPropagation()}>
                   <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 800, color: 'var(--primary)', whiteSpace: 'nowrap' }}>
                     ₹{(o.price || 0).toLocaleString('en-IN')}
                   </span>
                   <span style={{ padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: statusBg[o.status], color: statusColor[o.status], whiteSpace: 'nowrap' }}>
                     {statusLabel[o.status]}
                   </span>
-
-                  {/* Status change */}
                   <select value={o.status}
                     onChange={e => handleStatusChange(o.id, e.target.value)}
                     style={{ fontSize: 11, padding: '5px 8px', borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
                     {Object.entries(statusLabel).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                   </select>
+                </div>
 
-                  {/* Expand for tracking */}
-                  <button
-                    onClick={() => setExpandedOrderId(id => id === o.id ? null : o.id)}
-                    style={{ fontSize: 11, padding: '5px 12px', borderRadius: 6, background: isExpanded ? 'var(--primary)' : '#E3F2FD', color: isExpanded ? 'white' : '#1565C0', border: 'none', cursor: 'pointer', fontWeight: 700, whiteSpace: 'nowrap' }}>
-                    {isExpanded ? '▲ Close' : '🚚 Tracking'}
-                  </button>
+                {/* Expand indicator */}
+                <div style={{ fontSize: 13, color: 'var(--text-muted)', flexShrink: 0, marginLeft: 4 }}>
+                  {isExpanded ? '▲' : '▼'}
                 </div>
               </div>
 
-              {/* Expanded tracking editor */}
+              {/* ── Expanded: Full Order Details ── */}
               {isExpanded && (
-                <div style={{ borderTop: '1px solid var(--border)', background: 'var(--surface-alt)', padding: '16px 18px' }}>
-                  <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--primary)', marginBottom: 12 }}>
-                    📦 Set Tracking Info for Customer
+                <div style={{ borderTop: '2px solid var(--border)', background: '#FDFAF7', padding: '20px 20px' }}>
+
+                  {/* ── Items Ordered ── */}
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: 1, marginBottom: 10 }}>
+                      🛍️ ORDERED ITEMS ({displayItems.length})
+                    </div>
+                    {displayItems.map((item, idx) => (
+                      <div key={idx} style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'white', borderRadius: 10, padding: '10px 14px', marginBottom: 8, border: '1px solid var(--border)' }}>
+                        {/* Item image */}
+                        <div style={{ width: 52, height: 62, borderRadius: 8, overflow: 'hidden', flexShrink: 0, background: '#f5f0eb', border: '1px solid var(--border)' }}>
+                          {item.imageUrl || item.selectedColorImage
+                            ? <img src={item.selectedColorImage || item.imageUrl} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🥻</div>
+                          }
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>{item.name}</div>
+                          {item.fabric && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>🧵 {item.fabric}</div>}
+                          {item.selectedColorName && (
+                            <div style={{ marginTop: 4 }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: '#1565C0', background: '#E3F2FD', padding: '2px 8px', borderRadius: 10, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                {item.selectedColorImage && <img src={item.selectedColorImage} alt="" style={{ width: 14, height: 16, objectFit: 'cover', borderRadius: 3 }} />}
+                                🎨 {item.selectedColorName}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 800, color: 'var(--primary)' }}>₹{((item.price || 0) * (item.qty || 1)).toLocaleString('en-IN')}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>Qty: {item.qty || 1}</div>
+                        </div>
+                      </div>
+                    ))}
+                    {/* Total row */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', background: 'var(--primary)', borderRadius: 8, color: 'white' }}>
+                      <span style={{ fontWeight: 700, fontSize: 13 }}>Total Paid</span>
+                      <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 16 }}>₹{(o.price || 0).toLocaleString('en-IN')}</span>
+                    </div>
                   </div>
 
-                  {/* Delivery address */}
+                  {/* ── Customer Details ── */}
                   {o.address && (
-                    <div style={{ background: 'white', borderRadius: 8, padding: '10px 14px', marginBottom: 14, border: '1px solid var(--border)', fontSize: 12 }}>
-                      <div style={{ fontWeight: 700, color: 'var(--text-muted)', fontSize: 10, letterSpacing: 1, marginBottom: 4 }}>DELIVER TO</div>
-                      <div style={{ fontWeight: 700, color: 'var(--text)' }}>{o.address.name} · {o.address.phone}</div>
-                      <div style={{ color: 'var(--text-sec)' }}>{o.address.line1}, {o.address.line2}</div>
-                      <div style={{ color: 'var(--text-sec)' }}>{o.address.city}, {o.address.state} — {o.address.pincode}</div>
+                    <div style={{ background: 'white', borderRadius: 10, padding: '14px 16px', marginBottom: 20, border: '1px solid var(--border)' }}>
+                      <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: 1, marginBottom: 10 }}>📍 CUSTOMER & DELIVERY</div>
+                      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                        <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--primary)', color: 'var(--accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 15, flexShrink: 0 }}>
+                          {o.address.name?.[0]?.toUpperCase() || '?'}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--text)' }}>{o.address.name}</div>
+                          <div style={{ fontSize: 12, color: '#1565C0', fontWeight: 700, marginTop: 3 }}>📞 {o.address.phone}</div>
+                          <div style={{ fontSize: 12, color: 'var(--text-sec)', marginTop: 4, lineHeight: 1.6 }}>
+                            {o.address.line1}{o.address.line2 ? `, ${o.address.line2}` : ''}<br />
+                            {o.address.city}, {o.address.state} — {o.address.pincode}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-                    <div>
-                      <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1, display: 'block', marginBottom: 5 }}>
-                        TRACKING NUMBER (AWB / Docket No.)
-                      </label>
-                      <input
-                        value={trackingVal}
-                        onChange={e => handleTrackingChange(o.id, 'trackingNumber', e.target.value)}
-                        placeholder="e.g. BD123456789IN"
-                        style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, fontFamily: 'var(--font-sans)', outline: 'none', background: 'white', boxSizing: 'border-box' }}
-                        onFocus={e => e.target.style.borderColor = 'var(--accent)'}
-                        onBlur={e => e.target.style.borderColor = 'var(--border)'}
-                      />
+                  {/* ── Tracking Section ── */}
+                  <div style={{ background: 'white', borderRadius: 10, padding: '14px 16px', border: '1px solid var(--border)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: 1, marginBottom: 12 }}>🚚 TRACKING INFO</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+                      <div>
+                        <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1, display: 'block', marginBottom: 5 }}>TRACKING NUMBER (AWB)</label>
+                        <input
+                          value={trackingVal}
+                          onChange={e => handleTrackingChange(o.id, 'trackingNumber', e.target.value)}
+                          placeholder="e.g. BD123456789IN"
+                          style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, fontFamily: 'var(--font-sans)', outline: 'none', background: 'var(--bg)', boxSizing: 'border-box' }}
+                          onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                          onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1, display: 'block', marginBottom: 5 }}>ESTIMATED DELIVERY DATE</label>
+                        <input
+                          type="date"
+                          value={deliveryVal}
+                          onChange={e => handleTrackingChange(o.id, 'estimatedDelivery', e.target.value)}
+                          style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, fontFamily: 'var(--font-sans)', outline: 'none', background: 'var(--bg)', boxSizing: 'border-box', cursor: 'pointer' }}
+                          onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                          onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1, display: 'block', marginBottom: 5 }}>
-                        ESTIMATED DELIVERY DATE
-                      </label>
-                      <input
-                        type="date"
-                        value={deliveryVal}
-                        onChange={e => handleTrackingChange(o.id, 'estimatedDelivery', e.target.value)}
-                        style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, fontFamily: 'var(--font-sans)', outline: 'none', background: 'white', boxSizing: 'border-box', cursor: 'pointer' }}
-                        onFocus={e => e.target.style.borderColor = 'var(--accent)'}
-                        onBlur={e => e.target.style.borderColor = 'var(--border)'}
-                      />
-                    </div>
+                    <button
+                      onClick={() => saveTracking(o.id)}
+                      style={{
+                        padding: '10px 24px', borderRadius: 8,
+                        background: savedOrderId === o.id ? '#2E7D32' : 'var(--primary)',
+                        color: 'white', border: 'none', cursor: 'pointer',
+                        fontWeight: 800, fontSize: 13, fontFamily: 'var(--font-sans)',
+                        transition: 'background 0.2s',
+                      }}>
+                      {savedOrderId === o.id ? '✅ Saved! Customer can see this now.' : '💾 Save Tracking Info'}
+                    </button>
                   </div>
 
-                  <button
-                    onClick={() => saveTracking(o.id)}
-                    style={{
-                      padding: '9px 22px', borderRadius: 8,
-                      background: savedOrderId === o.id ? '#2E7D32' : 'var(--primary)',
-                      color: 'white', border: 'none', cursor: 'pointer',
-                      fontWeight: 800, fontSize: 13, fontFamily: 'var(--font-sans)',
-                      transition: 'background 0.2s',
-                    }}>
-                    {savedOrderId === o.id ? '✅ Saved! Customer can see this now.' : '💾 Save Tracking Info'}
-                  </button>
                 </div>
               )}
             </div>

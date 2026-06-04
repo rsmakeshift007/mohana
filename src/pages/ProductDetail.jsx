@@ -275,7 +275,7 @@ export default function ProductDetail() {
 
                 {/* Horizontal thumbnails — mobile only */}
                 {allImages.length > 1 && (
-                  <div className="pd-thumbs-horizontal" style={{ display: 'none', gap: 6, marginTop: 8, overflowX: 'auto' }}>
+                  <div className="pd-thumbs-horizontal" style={{ display: 'none', gap: 6, marginTop: 8, overflowX: 'auto', width: '100%', boxSizing: 'border-box' }}>
                     {allImages.map((img, idx) => (
                       <div key={idx} onClick={() => setActiveImageIdx(idx)}
                         style={{ width: 56, height: 64, borderRadius: 7, overflow: 'hidden', flexShrink: 0, cursor: 'pointer', border: idx === activeImageIdx ? '2px solid var(--accent)' : '2px solid transparent', opacity: idx === activeImageIdx ? 1 : 0.6, background: '#f5f0eb' }}>
@@ -736,11 +736,11 @@ export default function ProductDetail() {
             gap: 24px;
           }
           .product-image-container {
-            max-height: none;
+            max-height: 420px;
             aspect-ratio: 4/5;
           }
           .pd-thumbs-vertical { display: none !important; }
-          .pd-thumbs-horizontal { display: flex !important; }
+          .pd-thumbs-horizontal { display: flex !important; width: 100% !important; overflow-x: auto !important; }
           .pd-image-col, .pd-details-col { width: 100%; }
         }
       `}</style>
