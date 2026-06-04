@@ -721,6 +721,8 @@ function OrdersSection({ useBackend }) {
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [trackingInputs, setTrackingInputs] = useState({});
   const [savedOrderId, setSavedOrderId] = useState(null);
+  // Product catalog for enriching order items with fabric/image details
+  const [allProducts] = useState(() => productsDB.getAll());
 
   useEffect(() => {
     if (useBackend) {
@@ -793,10 +795,22 @@ function OrdersSection({ useBackend }) {
           const trackingVal = inputs.trackingNumber !== undefined ? inputs.trackingNumber : (o.trackingNumber || '');
           const deliveryVal = inputs.estimatedDelivery !== undefined ? inputs.estimatedDelivery : (o.estimatedDelivery || '');
 
-          // Build display items list — use detailed items[] if available, else fallback to order-level fields
-          const displayItems = (o.items && o.items.length > 0)
+          // Build display items — enrich with productsDB data for missing fabric/image
+          const rawItems = (o.items && o.items.length > 0)
             ? o.items
             : [{ id: o.id, name: o.product, qty: 1, price: o.price, fabric: o.fabric, imageUrl: o.selectedColorImage || o.imageUrl || o.images?.[0]?.src || '', selectedColorName: o.selectedColorName, selectedColorImage: o.selectedColorImage, selectedColorHex: o.selectedColorHex }];
+
+          const displayItems = rawItems.map(item => {
+            const prod = allProducts.find(p => p.id === item.id);
+            return {
+              ...item,
+              fabric:      item.fabric      || prod?.fabric      || '',
+              imageUrl:    item.imageUrl    || item.selectedColorImage || prod?.images?.[0]?.src || prod?.imageUrl || '',
+              occasions:   prod?.occasions  || (prod?.occasion ? [prod.occasion] : []),
+              region:      prod?.region     || '',
+              // selectedColorName stays from item (customer's actual choice — can't reconstruct from product)
+            };
+          });
 
           return (
             <div key={o.id} className="card" style={{ overflow: 'hidden' }}>
@@ -873,15 +887,29 @@ function OrdersSection({ useBackend }) {
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>{item.name}</div>
-                          {item.fabric && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>🧵 {item.fabric}</div>}
-                          {item.selectedColorName && (
-                            <div style={{ marginTop: 4 }}>
-                              <span style={{ fontSize: 11, fontWeight: 700, color: '#1565C0', background: '#E3F2FD', padding: '2px 8px', borderRadius: 10, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 5 }}>
+                            {item.fabric && (
+                              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', background: 'var(--surface-alt)', padding: '2px 8px', borderRadius: 8, border: '1px solid var(--border)' }}>
+                                🧵 {item.fabric}
+                              </span>
+                            )}
+                            {item.region && (
+                              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', background: 'var(--surface-alt)', padding: '2px 8px', borderRadius: 8, border: '1px solid var(--border)' }}>
+                                📍 {item.region}
+                              </span>
+                            )}
+                            {item.occasions?.length > 0 && (
+                              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', background: 'var(--surface-alt)', padding: '2px 8px', borderRadius: 8, border: '1px solid var(--border)' }}>
+                                🎭 {item.occasions.join(', ')}
+                              </span>
+                            )}
+                            {item.selectedColorName && (
+                              <span style={{ fontSize: 11, fontWeight: 700, color: '#1565C0', background: '#E3F2FD', padding: '2px 8px', borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                                 {item.selectedColorImage && <img src={item.selectedColorImage} alt="" style={{ width: 14, height: 16, objectFit: 'cover', borderRadius: 3 }} />}
                                 🎨 {item.selectedColorName}
                               </span>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                         <div style={{ textAlign: 'right', flexShrink: 0 }}>
                           <div style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 800, color: 'var(--primary)' }}>₹{((item.price || 0) * (item.qty || 1)).toLocaleString('en-IN')}</div>
