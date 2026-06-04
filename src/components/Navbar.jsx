@@ -3,6 +3,26 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
+// Instagram gradient SVG icon
+function InstagramIcon({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="ig-grad" cx="30%" cy="107%" r="150%">
+          <stop offset="0%"   stopColor="#fdf497" />
+          <stop offset="5%"   stopColor="#fdf497" />
+          <stop offset="45%"  stopColor="#fd5949" />
+          <stop offset="60%"  stopColor="#d6249f" />
+          <stop offset="90%"  stopColor="#285AEB" />
+        </radialGradient>
+      </defs>
+      <rect x="2" y="2" width="20" height="20" rx="6" fill="url(#ig-grad)" />
+      <circle cx="12" cy="12" r="4.5" stroke="white" strokeWidth="1.8" fill="none" />
+      <circle cx="17.2" cy="6.8" r="1.2" fill="white" />
+    </svg>
+  );
+}
+
 export default function Navbar() {
   const { cartCount, wishlist } = useCart();
   const { user, isLoggedIn, signOut } = useAuth();
@@ -10,6 +30,13 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [instagramUrl, setInstagramUrl] = useState('');
+
+  useEffect(() => {
+    import('../services/supabase').then(({ settingsAPI }) => {
+      settingsAPI.get('instagram').then(v => { if (v) setInstagramUrl(v); }).catch(() => {});
+    });
+  }, []);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -94,6 +121,26 @@ export default function Navbar() {
 
           {/* Right icons */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 'auto' }}>
+
+            {/* Instagram — desktop only */}
+            {instagramUrl && (
+              <a href={instagramUrl} target="_blank" rel="noreferrer"
+                className="nav-desktop"
+                title="Follow us on Instagram"
+                style={{
+                  width: 38, height: 38, borderRadius: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'transparent',
+                  border: '1px solid transparent',
+                  transition: 'all 0.2s',
+                  textDecoration: 'none',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#FCE4EC'; e.currentTarget.style.border = '1px solid #f48fb1'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.border = '1px solid transparent'; }}
+              >
+                <InstagramIcon size={22} />
+              </a>
+            )}
 
             {/* Search — desktop only */}
             <button onClick={() => setSearchOpen(!searchOpen)}
@@ -249,6 +296,12 @@ export default function Navbar() {
                 style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 0', borderTop: 'none', borderLeft: 'none', borderRight: 'none', borderBottom: '1px solid var(--border)', fontSize: 14, fontWeight: 600, color: '#c62828', background: 'none', cursor: 'pointer' }}>
                 🚪 Logout
               </button>
+            )}
+            {instagramUrl && (
+              <a href={instagramUrl} target="_blank" rel="noreferrer"
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border)', fontSize: 14, fontWeight: 600, color: '#d6249f', textDecoration: 'none' }}>
+                <InstagramIcon size={18} /> Follow us on Instagram
+              </a>
             )}
           </div>
         )}
