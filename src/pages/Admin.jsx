@@ -1156,7 +1156,7 @@ function InventorySection({ products, onEdit, onDelete, onToggleStock }) {
               );
             })()}
             <div style={{ padding: '12px 14px 14px' }}>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: 1, marginBottom: 2 }}>{p.fabric} · {p.region}</div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: 1, marginBottom: 2 }}>{p.fabric}{p.region ? ` · ${p.region}` : ''}</div>
               <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 14, marginBottom: 4, color: 'var(--text)' }}>{p.name}</div>
               {p.vendorName && (
                 <div style={{ fontSize: 10, color: 'var(--accent)', fontWeight: 700, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>

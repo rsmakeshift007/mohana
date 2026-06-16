@@ -360,7 +360,7 @@ export default function ProductDetail() {
 
             {/* Brand / Fabric label */}
             <div style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 8 }}>
-              {product.fabric}{product.region ? ` · ${product.region}` : ''}
+              {product.fabric}
             </div>
 
             {/* Product name */}
@@ -432,7 +432,6 @@ export default function ProductDetail() {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 18, paddingTop: 18, borderTop: product.colorVariants?.length > 0 ? '1px solid var(--border)' : 'none' }}>
               {[
                 product.fabric && { label: product.fabric, icon: '🧵' },
-                product.region && { label: product.region, icon: '📍' },
                 product.occasions?.length && { label: product.occasions.join(', '), icon: '🎭' },
                 product.length && { label: product.length, icon: '📏' },
                 product.blousePiece && { label: product.blousePiece, icon: '👘' },
@@ -517,7 +516,6 @@ export default function ProductDetail() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, maxWidth: 600 }}>
               {[
                 ['Fabric', product.fabric],
-                product.region ? ['Origin', product.region] : null,
                 ['Occasion', (Array.isArray(product.occasions) && product.occasions.length ? product.occasions : [product.occasion]).join(', ')],
                 product.length ? ['Length', product.length] : null,
                 product.blousePiece ? ['Blouse Piece', product.blousePiece] : null,
