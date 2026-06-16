@@ -111,6 +111,54 @@ export const productsAPI = {
 // ─────────────────────────────────────────────
 // VENDORS
 // ─────────────────────────────────────────────
+// Convert camelCase vendor form fields → snake_case DB columns
+function vendorToSnake(v) {
+  return {
+    name:            v.name            || '',
+    contact_person:  v.contactPerson   || v.contact_person   || '',
+    phone:           v.phone           || '',
+    phone2:          v.phone2          || '',
+    email:           v.email           || '',
+    city:            v.city            || '',
+    state:           v.state           || '',
+    address:         v.address         || '',
+    gst_number:      v.gstNumber       || v.gst_number       || '',
+    bank_name:       v.bankName        || v.bank_name        || '',
+    account_number:  v.accountNumber   || v.account_number   || '',
+    ifsc_code:       v.ifscCode        || v.ifsc_code        || '',
+    account_holder:  v.accountHolder   || v.account_holder   || '',
+    upi_id:          v.upiId           || v.upi_id           || '',
+    fabrics:         v.fabrics         || '',
+    notes:           v.notes           || '',
+    active:          v.active !== undefined ? v.active : true,
+  };
+}
+
+// Convert snake_case DB row → camelCase for React
+function vendorToCamel(v) {
+  return {
+    id:             v.id,
+    name:           v.name           || '',
+    contactPerson:  v.contact_person || '',
+    phone:          v.phone          || '',
+    phone2:         v.phone2         || '',
+    email:          v.email          || '',
+    city:           v.city           || '',
+    state:          v.state          || '',
+    address:        v.address        || '',
+    gstNumber:      v.gst_number     || '',
+    bankName:       v.bank_name      || '',
+    accountNumber:  v.account_number || '',
+    ifscCode:       v.ifsc_code      || '',
+    accountHolder:  v.account_holder || '',
+    upiId:          v.upi_id         || '',
+    fabrics:        v.fabrics        || '',
+    notes:          v.notes          || '',
+    active:         v.active !== false,
+    created_at:     v.created_at,
+  };
+}
+
 export const vendorsAPI = {
   async getAll() {
     const { data, error } = await supabase
@@ -118,28 +166,28 @@ export const vendorsAPI = {
       .select('*')
       .order('name');
     if (error) throw error;
-    return data;
+    return (data || []).map(vendorToCamel);
   },
 
   async add(vendor) {
     const { data, error } = await supabase
       .from('vendors')
-      .insert([vendor])
+      .insert([vendorToSnake(vendor)])
       .select()
       .single();
     if (error) throw error;
-    return data;
+    return vendorToCamel(data);
   },
 
   async update(id, updates) {
     const { data, error } = await supabase
       .from('vendors')
-      .update(updates)
+      .update(vendorToSnake(updates))
       .eq('id', id)
       .select()
       .single();
     if (error) throw error;
-    return data;
+    return vendorToCamel(data);
   },
 
   async delete(id) {

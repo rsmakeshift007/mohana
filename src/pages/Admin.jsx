@@ -216,7 +216,7 @@ function ProductForm({ onSave, onCancel, editProduct }) {
   useEffect(() => {
     supabaseVendorsAPI.getAll()
       .then(data => setVendors((data || []).filter(v => v.active !== false)))
-      .catch(() => setVendors(vendorDB.getAll().filter(v => v.active !== false)));
+      .catch(err => console.error('Vendor load error:', err.message));
   }, []);
 
   const [images, setImages] = useState(() => {
@@ -1540,8 +1540,9 @@ function VendorSection() {
     try {
       const data = await supabaseVendorsAPI.getAll();
       setVendors(data || []);
-    } catch {
-      setVendors(vendorDB.getAll());
+    } catch (err) {
+      console.error('Vendors fetch error:', err.message);
+      setVendors([]);
     } finally {
       setLoading(false);
     }
@@ -2310,7 +2311,7 @@ function SocialOrdersSection() {
   const blankForm = { customerName:'', phone:'', source:'whatsapp', productName:'', productDesc:'', quantity:1, soldPrice:'', costPrice:'', vendorId:'', vendorName:'', trackingId:'', courier:'', status:'pending', notes:'' };
 
   const [orders,     setOrders]     = useState(() => manualOrdersDB.getAll());
-  const [vendors,    setVendors]    = useState(() => vendorDB.getAll().filter(v => v.active !== false));
+  const [vendors,    setVendors]    = useState([]);
   const [showForm,   setShowForm]   = useState(false);
   const [editId,     setEditId]     = useState(null);
   const [form,       setForm]       = useState(blankForm);
@@ -2320,11 +2321,17 @@ function SocialOrdersSection() {
   const [deleteId,   setDeleteId]   = useState(null);
   const [saved,      setSaved]      = useState(false);
 
-  // Listen for cross-tab updates
+  // Load vendors from Supabase
+  useEffect(() => {
+    supabaseVendorsAPI.getAll()
+      .then(data => setVendors((data || []).filter(v => v.active !== false)))
+      .catch(err => console.error('Vendor load error:', err.message));
+  }, []);
+
+  // Listen for cross-tab updates (manual orders only)
   useEffect(() => {
     function onStorage(e) {
       if (e.key === 'mohanah_db_manual_orders') setOrders(manualOrdersDB.getAll());
-      if (e.key === 'mohanah_db_vendors') setVendors(vendorDB.getAll().filter(v => v.active !== false));
     }
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
