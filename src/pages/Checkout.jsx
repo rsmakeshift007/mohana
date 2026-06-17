@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { ordersAPI as supabaseOrdersAPI } from '../services/supabase';
+import { ordersAPI as supabaseOrdersAPI, profilesAPI } from '../services/supabase';
 
 const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID;
 const STEPS = ['Address', 'Review'];
+const LABELS = ['🏠 Home', '💼 Office', '📍 Other'];
 
-// Load Razorpay script dynamically
 function loadRazorpayScript() {
   return new Promise(resolve => {
     if (window.Razorpay) { resolve(true); return; }
@@ -18,6 +18,8 @@ function loadRazorpayScript() {
     document.body.appendChild(s);
   });
 }
+
+const BLANK_ADDRESS = { label: '🏠 Home', name: '', phone: '', line1: '', line2: '', city: '', state: '', pincode: '' };
 
 export default function Checkout() {
   const { items, subtotal, couponDiscount, delivery, giftWrapCharge, total, dispatch } = useCart();
@@ -30,10 +32,26 @@ export default function Checkout() {
   const [orderId, setOrderId] = useState('');
   const [error,   setError]   = useState('');
 
-  const [address, setAddress] = useState({
-    name: '', phone: '', line1: '', line2: '',
-    city: '', state: '', pincode: '',
-  });
+  // ── Address state ──────────────────────────────────────────────
+  const [savedAddresses,   setSavedAddresses]   = useState([]);   // array from Supabase
+  const [selectedIdx,      setSelectedIdx]       = useState(-1);  // which saved address is selected (-1 = none)
+  const [showNewForm,      setShowNewForm]       = useState(true); // show blank form or card picker
+  const [address, setAddress] = useState({ ...BLANK_ADDRESS });
+
+  // Load all saved addresses from Supabase on mount
+  useEffect(() => {
+    if (!user?.id) return;
+    profilesAPI.getAddresses(user.id)
+      .then(saved => {
+        if (saved && saved.length > 0) {
+          setSavedAddresses(saved);
+          setSelectedIdx(0);
+          setAddress(saved[0]);
+          setShowNewForm(false);
+        }
+      })
+      .catch(() => {});
+  }, [user?.id]);
 
   if (items.length === 0 && !placed) { navigate('/cart'); return null; }
 
@@ -69,7 +87,7 @@ export default function Checkout() {
     const year        = new Date().getFullYear();
     const orderNumber = `MNH-${year}-${String(Date.now()).slice(-6)}`;
 
-    const saved = await supabaseOrdersAPI.add({
+    await supabaseOrdersAPI.add({
       order_number:          orderNumber,
       user_id:               user?.id    || null,
       user_email:            user?.email || '',
@@ -99,20 +117,35 @@ export default function Checkout() {
       razorpay_order_id:     razorpayOrderId,
       tracking_number:       '',
       estimated_delivery:    '',
-      status:                'confirmed',   // confirmed immediately on payment
+      status:                'confirmed',
       progress:              25,
       date:                  new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
     });
 
-    return saved.order_number || orderNumber;
+    // Save address to list if it's new (not already selected from saved)
+    if (user?.id) {
+      let updated = [...savedAddresses];
+      if (showNewForm) {
+        // New address — add to list (avoid exact duplicates)
+        const isDuplicate = updated.some(a =>
+          a.line1 === address.line1 && a.pincode === address.pincode && a.name === address.name
+        );
+        if (!isDuplicate) {
+          updated.unshift({ ...address }); // add at top
+          if (updated.length > 5) updated = updated.slice(0, 5); // max 5 saved
+        }
+      }
+      profilesAPI.saveAddresses(user.id, updated).catch(() => {});
+    }
+
+    return orderNumber;
   }
 
-  // ─── Open Razorpay ──────────────────────────────────────────
+  // ─── Razorpay ───────────────────────────────────────────────
   async function handlePay() {
     setError('');
     setPlacing(true);
 
-    // 1. Load Razorpay script
     const loaded = await loadRazorpayScript();
     if (!loaded) {
       setError('❌ Razorpay load nahi hua. Internet check karein aur retry karein.');
@@ -120,13 +153,12 @@ export default function Checkout() {
       return;
     }
 
-    // 2. Create order on backend
     let razorpayOrderId, orderAmount;
     try {
       const res  = await fetch('/api/create-order', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ amount: total * 100 }), // paise
+        body:    JSON.stringify({ amount: total * 100 }),
       });
       const data = await res.json();
       if (!res.ok || !data.order_id) throw new Error(data.error || 'Order create failed');
@@ -138,7 +170,6 @@ export default function Checkout() {
       return;
     }
 
-    // 3. Open Razorpay modal
     const options = {
       key:         RAZORPAY_KEY_ID,
       amount:      orderAmount,
@@ -158,7 +189,6 @@ export default function Checkout() {
       theme: { color: '#3E4A2C' },
 
       handler: async function(response) {
-        // 4. Verify signature on backend
         try {
           const vRes  = await fetch('/api/verify-payment', {
             method:  'POST',
@@ -170,12 +200,8 @@ export default function Checkout() {
             }),
           });
           const vData = await vRes.json();
+          if (!vRes.ok || !vData.valid) throw new Error(vData.error || 'Payment verification failed');
 
-          if (!vRes.ok || !vData.valid) {
-            throw new Error(vData.error || 'Payment verification failed');
-          }
-
-          // 5. Save confirmed order to Supabase
           const oid = await saveConfirmedOrder(response.razorpay_payment_id, response.razorpay_order_id);
           dispatch({ type: 'CLEAR_CART' });
           setOrderId(oid);
@@ -210,6 +236,33 @@ export default function Checkout() {
   };
 
   const addressFilled = address.name && address.phone && address.line1 && address.city && address.state && address.pincode;
+
+  // ─── Select saved address ────────────────────────────────────
+  function selectSaved(idx) {
+    setSelectedIdx(idx);
+    setAddress({ ...savedAddresses[idx] });
+    setShowNewForm(false);
+  }
+
+  // ─── Delete saved address ────────────────────────────────────
+  function deleteSaved(idx) {
+    const updated = savedAddresses.filter((_, i) => i !== idx);
+    setSavedAddresses(updated);
+    if (user?.id) profilesAPI.saveAddresses(user.id, updated).catch(() => {});
+    if (selectedIdx === idx) {
+      if (updated.length > 0) {
+        setSelectedIdx(0);
+        setAddress({ ...updated[0] });
+        setShowNewForm(false);
+      } else {
+        setSelectedIdx(-1);
+        setAddress({ ...BLANK_ADDRESS });
+        setShowNewForm(true);
+      }
+    } else if (selectedIdx > idx) {
+      setSelectedIdx(selectedIdx - 1);
+    }
+  }
 
   return (
     <div className="page" style={{ paddingTop: 68 }}>
@@ -249,36 +302,148 @@ export default function Checkout() {
 
           <div className="card" style={{ padding: 24 }}>
 
-            {/* Step 0: Address */}
+            {/* ── Step 0: Address ── */}
             {step === 0 && (
               <div>
                 <h2 style={{ fontFamily: 'var(--font-sans)', fontSize: 18, fontWeight: 800, marginBottom: 20 }}>
                   📍 Delivery Address
                 </h2>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                  {[
-                    { label: 'Full Name *',            key: 'name',    col: 2 },
-                    { label: 'Phone Number *',          key: 'phone',   col: 1 },
-                    { label: 'Address Line 1 *',        key: 'line1',   col: 2 },
-                    { label: 'Address Line 2 (optional)', key: 'line2', col: 2 },
-                    { label: 'City *',                  key: 'city',    col: 1 },
-                    { label: 'State *',                 key: 'state',   col: 1 },
-                    { label: 'Pincode *',               key: 'pincode', col: 1 },
-                  ].map(field => (
-                    <div key={field.key} style={{ gridColumn: `span ${field.col}` }}>
-                      <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1, display: 'block', marginBottom: 5 }}>
-                        {field.label.toUpperCase()}
-                      </label>
-                      <input
-                        value={address[field.key]}
-                        onChange={e => setAddress(a => ({ ...a, [field.key]: e.target.value }))}
-                        style={inputSt}
-                        onFocus={e => e.target.style.borderColor = 'var(--accent)'}
-                        onBlur={e => e.target.style.borderColor = 'var(--border)'}
-                      />
+
+                {/* Saved address cards */}
+                {savedAddresses.length > 0 && (
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1, marginBottom: 10 }}>
+                      SAVED ADDRESSES
                     </div>
-                  ))}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {savedAddresses.map((addr, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => selectSaved(idx)}
+                          style={{
+                            border: `2px solid ${!showNewForm && selectedIdx === idx ? 'var(--primary)' : 'var(--border)'}`,
+                            borderRadius: 12,
+                            padding: '12px 16px',
+                            cursor: 'pointer',
+                            background: !showNewForm && selectedIdx === idx ? '#F1F4EB' : 'var(--bg)',
+                            transition: 'all 0.15s',
+                            position: 'relative',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            {/* Radio */}
+                            <div style={{
+                              width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
+                              border: `2px solid ${!showNewForm && selectedIdx === idx ? 'var(--primary)' : 'var(--border)'}`,
+                              background: !showNewForm && selectedIdx === idx ? 'var(--primary)' : 'white',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>
+                              {!showNewForm && selectedIdx === idx && (
+                                <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'white' }} />
+                              )}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                                <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--primary)' }}>{addr.label || '📍 Other'}</span>
+                                <span style={{ fontSize: 13, fontWeight: 700 }}>{addr.name}</span>
+                                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>· {addr.phone}</span>
+                              </div>
+                              <div style={{ fontSize: 12, color: 'var(--text-sec)', lineHeight: 1.5 }}>
+                                {addr.line1}{addr.line2 ? `, ${addr.line2}` : ''}, {addr.city}, {addr.state} — {addr.pincode}
+                              </div>
+                            </div>
+                            {/* Delete */}
+                            <button
+                              onClick={e => { e.stopPropagation(); deleteSaved(idx); }}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--text-muted)', flexShrink: 0, padding: '2px 6px' }}
+                              title="Remove this address"
+                            >🗑</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Add new address toggle */}
+                <div
+                  onClick={() => {
+                    setShowNewForm(true);
+                    setSelectedIdx(-1);
+                    setAddress({ ...BLANK_ADDRESS });
+                  }}
+                  style={{
+                    border: `2px dashed ${showNewForm ? 'var(--primary)' : 'var(--border)'}`,
+                    borderRadius: 12,
+                    padding: '12px 16px',
+                    cursor: 'pointer',
+                    marginBottom: showNewForm ? 16 : 20,
+                    background: showNewForm ? '#F1F4EB' : 'transparent',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    color: showNewForm ? 'var(--primary)' : 'var(--text-muted)',
+                    fontWeight: 700, fontSize: 13,
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <span style={{ fontSize: 18 }}>＋</span>
+                  {savedAddresses.length === 0 ? 'Enter Delivery Address' : 'Add New Address'}
                 </div>
+
+                {/* New address form */}
+                {showNewForm && (
+                  <div>
+                    {/* Label selector */}
+                    <div style={{ marginBottom: 16 }}>
+                      <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1, display: 'block', marginBottom: 8 }}>
+                        ADDRESS TYPE
+                      </label>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {LABELS.map(lbl => (
+                          <button
+                            key={lbl}
+                            onClick={() => setAddress(a => ({ ...a, label: lbl }))}
+                            style={{
+                              padding: '6px 14px', borderRadius: 20,
+                              border: `1.5px solid ${address.label === lbl ? 'var(--primary)' : 'var(--border)'}`,
+                              background: address.label === lbl ? 'var(--primary)' : 'var(--bg)',
+                              color: address.label === lbl ? 'white' : 'var(--text-sec)',
+                              fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                              transition: 'all 0.15s',
+                            }}
+                          >
+                            {lbl}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                      {[
+                        { label: 'Full Name *',              key: 'name',    col: 2 },
+                        { label: 'Phone Number *',            key: 'phone',   col: 1 },
+                        { label: 'Address Line 1 *',          key: 'line1',   col: 2 },
+                        { label: 'Address Line 2 (optional)', key: 'line2',   col: 2 },
+                        { label: 'City *',                    key: 'city',    col: 1 },
+                        { label: 'State *',                   key: 'state',   col: 1 },
+                        { label: 'Pincode *',                 key: 'pincode', col: 1 },
+                      ].map(field => (
+                        <div key={field.key} style={{ gridColumn: `span ${field.col}` }}>
+                          <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1, display: 'block', marginBottom: 5 }}>
+                            {field.label.toUpperCase()}
+                          </label>
+                          <input
+                            value={address[field.key]}
+                            onChange={e => setAddress(a => ({ ...a, [field.key]: e.target.value }))}
+                            style={inputSt}
+                            onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                            onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <button
                   onClick={() => { if (addressFilled) setStep(1); }}
                   className="btn btn-primary"
@@ -290,7 +455,7 @@ export default function Checkout() {
               </div>
             )}
 
-            {/* Step 1: Review + Pay */}
+            {/* ── Step 1: Review + Pay ── */}
             {step === 1 && (
               <div>
                 <h2 style={{ fontFamily: 'var(--font-sans)', fontSize: 18, fontWeight: 800, marginBottom: 20 }}>
@@ -299,13 +464,19 @@ export default function Checkout() {
 
                 {/* Address review */}
                 <div style={{ background: 'var(--surface-alt)', borderRadius: 12, padding: '14px 16px', marginBottom: 12 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1, marginBottom: 8 }}>DELIVERING TO</div>
-                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 2 }}>{address.name} · {address.phone}</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-sec)' }}>{address.line1}{address.line2 ? `, ${address.line2}` : ''}</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-sec)' }}>{address.city}, {address.state} — {address.pincode}</div>
-                  <button onClick={() => setStep(0)} style={{ marginTop: 8, fontSize: 11, color: 'var(--accent)', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                    ✏️ Edit Address
-                  </button>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1, marginBottom: 6 }}>
+                        DELIVERING TO · <span style={{ color: 'var(--primary)' }}>{address.label || '📍 Other'}</span>
+                      </div>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 2 }}>{address.name} · {address.phone}</div>
+                      <div style={{ fontSize: 13, color: 'var(--text-sec)' }}>{address.line1}{address.line2 ? `, ${address.line2}` : ''}</div>
+                      <div style={{ fontSize: 13, color: 'var(--text-sec)' }}>{address.city}, {address.state} — {address.pincode}</div>
+                    </div>
+                    <button onClick={() => setStep(0)} style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0, marginTop: 2 }}>
+                      ✏️ Change
+                    </button>
+                  </div>
                 </div>
 
                 {/* Items */}
@@ -327,7 +498,6 @@ export default function Checkout() {
                   </div>
                 ))}
 
-                {/* Pay button */}
                 {error && (
                   <div style={{ background: '#FFEBEE', border: '1px solid #EF9A9A', borderRadius: 10, padding: '12px 14px', marginBottom: 14, fontSize: 13, color: '#C62828', fontWeight: 600 }}>
                     {error}
@@ -398,6 +568,14 @@ export default function Checkout() {
           </div>
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .checkout-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
