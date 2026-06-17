@@ -743,10 +743,16 @@ function ProductForm({ onSave, onCancel, editProduct }) {
 // ─── Orders Section ──────────────────────────
 // snake_case (Supabase) → camelCase (UI)
 function normalizeOrder(o) {
+  // address can be a JSONB object or a JSON string — parse safely
+  let addr = o.address;
+  if (typeof addr === 'string') {
+    try { addr = JSON.parse(addr); } catch { addr = {}; }
+  }
   return {
     ...o,
     id:                 o.order_number       || o.id,
     _dbId:              o.id,
+    address:            addr || {},
     trackingNumber:     o.tracking_number    || o.trackingNumber    || '',
     estimatedDelivery:  o.estimated_delivery || o.estimatedDelivery || '',
     selectedColorName:  o.selected_color_name  || o.selectedColorName  || '',
