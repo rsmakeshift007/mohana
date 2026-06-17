@@ -23,7 +23,7 @@ export default function Cart() {
       <div className="page" style={{ paddingTop: 68, minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center', padding: '0 24px' }}>
           <div style={{ fontSize: 72, marginBottom: 16 }}>🔐</div>
-          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, marginBottom: 8 }}>Login Required</h2>
+          <h2 style={{ fontFamily: 'var(--font-sans)', fontSize: 22, marginBottom: 8 }}>Login Required</h2>
           <p style={{ color: 'var(--text-sec)', marginBottom: 28, fontSize: 14 }}>
             Please login to view your cart and place orders.
           </p>
@@ -45,7 +45,7 @@ export default function Cart() {
       <div className="page" style={{ paddingTop: 68, minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 80, marginBottom: 16 }}>🛍️</div>
-          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, marginBottom: 8 }}>Your cart is empty</h2>
+          <h2 style={{ fontFamily: 'var(--font-sans)', fontSize: 24, marginBottom: 8 }}>Your cart is empty</h2>
           <p style={{ color: 'var(--text-sec)', marginBottom: 24 }}>Add some beautiful sarees to get started!</p>
           <button onClick={() => navigate('/catalog')} className="btn btn-primary btn-lg">
             Explore Collection
@@ -59,14 +59,14 @@ export default function Cart() {
     <div className="page" style={{ paddingTop: 68 }}>
       <div style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))', padding: '28px 0' }}>
         <div className="container">
-          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 26, fontWeight: 900, color: 'white' }}>
+          <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 26, fontWeight: 900, color: 'white' }}>
             🛍️ My Cart ({cartCount} item{cartCount !== 1 ? 's' : ''})
           </h1>
         </div>
       </div>
 
       <div className="container" style={{ paddingTop: 28, paddingBottom: 48 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24, alignItems: 'start' }}>
+        <div className="cart-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24, alignItems: 'start' }}>
 
           {/* ── Cart Items ── */}
           <div>
@@ -84,10 +84,10 @@ export default function Cart() {
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, marginBottom: 2 }}>
-                    {item.fabric} · {item.region}
+                    {item.fabric}
                   </div>
                   <Link to={`/product/${item.id}`} style={{ textDecoration: 'none' }}>
-                    <div style={{ fontFamily: 'var(--font-serif)', fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>
                       {item.name}
                     </div>
                   </Link>
@@ -103,7 +103,7 @@ export default function Cart() {
                     </div>
                   )}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                    <span style={{ fontFamily: 'var(--font-serif)', fontSize: 17, fontWeight: 800, color: 'var(--primary)' }}>
+                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: 17, fontWeight: 800, color: 'var(--primary)' }}>
                       ₹{item.price.toLocaleString('en-IN')}
                     </span>
                     {item.originalPrice && (
@@ -134,7 +134,7 @@ export default function Cart() {
                   </div>
                 </div>
 
-                <div style={{ fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 800, color: 'var(--primary)', flexShrink: 0, textAlign: 'right' }}>
+                <div style={{ fontFamily: 'var(--font-sans)', fontSize: 16, fontWeight: 800, color: 'var(--primary)', flexShrink: 0, textAlign: 'right' }}>
                   ₹{(item.price * item.qty).toLocaleString('en-IN')}
                 </div>
               </div>
@@ -158,7 +158,7 @@ export default function Cart() {
           {/* ── Order Summary ── */}
           <div>
             <div className="card" style={{ padding: 20 }}>
-              <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 17, fontWeight: 800, marginBottom: 16 }}>Order Summary</h3>
+              <h3 style={{ fontFamily: 'var(--font-sans)', fontSize: 17, fontWeight: 800, marginBottom: 16 }}>Order Summary</h3>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-sec)' }}>
@@ -193,8 +193,8 @@ export default function Cart() {
 
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12, marginBottom: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 16 }}>Total</span>
-                  <span style={{ fontFamily: 'var(--font-serif)', fontWeight: 900, fontSize: 20, color: 'var(--primary)' }}>
+                  <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 16 }}>Total</span>
+                  <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 20, color: 'var(--primary)' }}>
                     ₹{total.toLocaleString('en-IN')}
                   </span>
                 </div>
@@ -263,6 +263,13 @@ export default function Cart() {
           </div>
         </div>
       </div>
+      <style>{`
+        @media (max-width: 768px) {
+          .cart-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

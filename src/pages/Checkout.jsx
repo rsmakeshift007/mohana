@@ -43,7 +43,7 @@ export default function Checkout() {
       <div className="page" style={{ paddingTop: 68, minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center', maxWidth: 440, padding: '0 20px' }}>
           <div style={{ fontSize: 80, marginBottom: 16 }}>✅</div>
-          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 26, fontWeight: 900, color: 'var(--primary)', marginBottom: 8 }}>
+          <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 26, fontWeight: 900, color: 'var(--primary)', marginBottom: 8 }}>
             Payment Successful!
           </h1>
           <p style={{ color: 'var(--text-sec)', fontSize: 14, lineHeight: 1.8, marginBottom: 12 }}>
@@ -52,7 +52,7 @@ export default function Checkout() {
           </p>
           <div style={{ background: 'var(--surface-alt)', borderRadius: 'var(--radius-md)', padding: '12px 20px', marginBottom: 24, display: 'inline-block' }}>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>ORDER ID</div>
-            <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 16, color: 'var(--primary)' }}>{orderId}</div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 16, color: 'var(--primary)' }}>{orderId}</div>
           </div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
             <button onClick={() => navigate('/orders')} className="btn btn-primary">Track Order</button>
@@ -217,7 +217,7 @@ export default function Checkout() {
       {/* Header */}
       <div style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))', padding: '28px 0' }}>
         <div className="container">
-          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, fontWeight: 900, color: 'white', marginBottom: 16 }}>
+          <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 24, fontWeight: 900, color: 'white', marginBottom: 16 }}>
             Checkout
           </h1>
           <div style={{ display: 'flex', gap: 0 }}>
@@ -252,7 +252,7 @@ export default function Checkout() {
             {/* Step 0: Address */}
             {step === 0 && (
               <div>
-                <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 800, marginBottom: 20 }}>
+                <h2 style={{ fontFamily: 'var(--font-sans)', fontSize: 18, fontWeight: 800, marginBottom: 20 }}>
                   📍 Delivery Address
                 </h2>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
@@ -293,7 +293,7 @@ export default function Checkout() {
             {/* Step 1: Review + Pay */}
             {step === 1 && (
               <div>
-                <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 800, marginBottom: 20 }}>
+                <h2 style={{ fontFamily: 'var(--font-sans)', fontSize: 18, fontWeight: 800, marginBottom: 20 }}>
                   📋 Review & Pay
                 </h2>
 
@@ -319,7 +319,7 @@ export default function Checkout() {
                       <div style={{ width: 44, height: 44, borderRadius: 6, background: `${item.color}88`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>🥻</div>
                     )}
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 13 }}>{item.name}</div>
+                      <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 13 }}>{item.name}</div>
                       {item.selectedColorName && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.selectedColorName}</div>}
                       <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Qty: {item.qty}</div>
                     </div>
@@ -343,7 +343,7 @@ export default function Checkout() {
                     background: placing ? '#aaa' : 'var(--primary)',
                     color: 'var(--accent-light)',
                     border: 'none', cursor: placing ? 'not-allowed' : 'pointer',
-                    fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 900,
+                    fontFamily: 'var(--font-sans)', fontSize: 18, fontWeight: 900,
                     boxShadow: placing ? 'none' : '0 4px 16px rgba(62,74,44,0.35)',
                     transition: 'all 0.2s',
                   }}
@@ -365,7 +365,7 @@ export default function Checkout() {
 
           {/* ── Order Summary ── */}
           <div className="card" style={{ padding: 20 }}>
-            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 15, fontWeight: 800, marginBottom: 14 }}>Bill Summary</h3>
+            <h3 style={{ fontFamily: 'var(--font-sans)', fontSize: 15, fontWeight: 800, marginBottom: 14 }}>Bill Summary</h3>
             {[
               ['Subtotal',    `₹${subtotal.toLocaleString('en-IN')}`],
               couponDiscount > 0 ? ['Coupon Savings', `-₹${couponDiscount.toLocaleString('en-IN')}`] : null,
@@ -378,15 +378,15 @@ export default function Checkout() {
               </div>
             ))}
             <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10, marginTop: 4, display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontFamily: 'var(--font-serif)', fontWeight: 800 }}>Total</span>
-              <span style={{ fontFamily: 'var(--font-serif)', fontWeight: 900, fontSize: 17, color: 'var(--primary)' }}>
+              <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 800 }}>Total</span>
+              <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 17, color: 'var(--primary)' }}>
                 ₹{total.toLocaleString('en-IN')}
               </span>
             </div>
             {items.map(item => (
               <div key={item.id} style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 12, padding: '8px 10px', background: 'var(--surface-alt)', borderRadius: 8 }}>
                 <div style={{ width: 28, height: 28, borderRadius: 4, background: `${item.color}88`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>🥻</div>
-                <div style={{ flex: 1, fontSize: 11, fontFamily: 'var(--font-serif)', fontWeight: 700, color: 'var(--text)' }}>{item.name}</div>
+                <div style={{ flex: 1, fontSize: 11, fontFamily: 'var(--font-sans)', fontWeight: 700, color: 'var(--text)' }}>{item.name}</div>
                 <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary)' }}>×{item.qty}</div>
               </div>
             ))}
